@@ -67,7 +67,8 @@
     <Compile Include="MusicPlayingStatusType.cs" />
     <Compile Include="SampleDataCollection.cs" />
     <Compile Include="ViewModel.cs" />
-    <Compile Include="WaveViewGridLineViewModel.cs" />
+    <Compile Include="WaveShapeViewGridLineViewModel.cs" />
+    <Compile Include="TimeStampViewElementViewModel.cs" />
     <Page Include="AboutDialogWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

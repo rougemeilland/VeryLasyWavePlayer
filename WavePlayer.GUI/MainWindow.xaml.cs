@@ -1,14 +1,12 @@
-﻿using System.Collections.ObjectModel;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -22,7 +20,6 @@ namespace WavePlayer.GUI
     public partial class MainWindow
         : Window
     {
-        private const string _copyrightText = "©2023 Palmtree Software";
         private const string _developersUrl = "https://github.com/rougemeilland/VeryLazyWavePlayer";
         private const double _pixelsPerSecondsScaleFactor = 4.0 / 3;
         private readonly MainWindowViewModel _viewModel;
@@ -83,7 +80,7 @@ namespace WavePlayer.GUI
                         }
                         else
                         {
-                            dialog.InitialDirectory = System.IO.Path.GetDirectoryName(latestOpenedFilePath);
+                            dialog.InitialDirectory = Path.GetDirectoryName(latestOpenedFilePath);
                             dialog.FileName = latestOpenedFilePath;
                         }
 
@@ -148,7 +145,7 @@ namespace WavePlayer.GUI
                         var viewModel = new AboutDialogWindowViewModel
                         {
                             Version = $"Very Lazy Wave Player {GetType().Assembly.GetName().Version}",
-                            Copyright = _copyrightText,
+                            Copyright = ((AssemblyCopyrightAttribute)GetType().Assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0]).Copyright,
                             Url = _developersUrl,
                             OkCommand =
                                 new Command(
@@ -176,6 +173,7 @@ namespace WavePlayer.GUI
                             {
                                 MusicPlayer.Pause();
                                 _viewModel.MarkedTime += TimeSpan.FromMilliseconds(10);
+                                _viewModel.PlayingTime = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                             });
                         }));
@@ -391,7 +389,7 @@ namespace WavePlayer.GUI
                     {
                         case nameof(_viewModel.MarkedTime):
                         case nameof(_viewModel.PixelsPerSeconds):
-                            _viewModel.WaveViewHorizontalOffsetSeconds = WaveViewPanel.ActualWidth / 2 / _viewModel.PixelsPerSeconds - _viewModel.MarkedTime.TotalSeconds;
+                            _viewModel.WaveShapeViewHorizontalOffsetSeconds = WaveShapeView.ActualWidth / 2 / _viewModel.PixelsPerSeconds - _viewModel.MarkedTime.TotalSeconds;
                             break;
                         default:
                             break;
@@ -404,7 +402,36 @@ namespace WavePlayer.GUI
                     switch (e.PropertyName)
                     {
                         case nameof(_viewModel.PixelsPerSeconds):
-                            _viewModel.WaveViewWidthSeconds = WaveViewPanel.ActualWidth / _viewModel.PixelsPerSeconds;
+                            _viewModel.WaveShapeViewWidthSeconds = WaveShapeView.ActualWidth / _viewModel.PixelsPerSeconds;
+                            break;
+                        default:
+                            break;
+                    }
+                };
+
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.MusicDuration):
+                        case nameof(_viewModel.PixelsPerSeconds):
+                            _viewModel.WaveShapeViewGridLines = GetGridLines(_viewModel.MusicDuration, _viewModel.PixelsPerSeconds, _viewModel.VerticalLineTickness);
+                            _viewModel.TimeStampsViewElements = GetTimeStamps(_viewModel.MusicDuration, _viewModel.PixelsPerSeconds, time => MainWindowViewModel.FormatTime(time));
+                            break;
+                        default:
+                            break;
+                    }
+                };
+
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.MarkedTime):
+                        case nameof(_viewModel.PixelsPerSeconds):
+                            _viewModel.WaveShapeViewHorizontalOffsetPixels = TimeStampView.ActualWidth / 2 - _viewModel.MarkedTime.TotalSeconds * _viewModel.PixelsPerSeconds;
                             break;
                         default:
                             break;
@@ -427,9 +454,9 @@ namespace WavePlayer.GUI
 
             _10msecIntervalTimer.Start();
 
-            // TODO: 秒グリッドの表示
             // TODO: マウスホイールでの拡大縮小
             // TODO: マウスクリックでの位置移動
+            // TODO: オーバービューのバーを表示。クリックすることでその付近にマーカーを移動。
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -557,28 +584,117 @@ namespace WavePlayer.GUI
             return points;
         }
 
-        private void WaveViewPanelSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
+        private static ObservableCollection<WaveShapeViewGridLineViewModel> GetGridLines(TimeSpan musicDuration, double pixelsPerSeconds, double verticalLineTickness)
+        {
+            var (pitch, interval) = GetGridLinePitch(pixelsPerSeconds);
+            var gridLines = new List<WaveShapeViewGridLineViewModel>();
+            for (var index = 0; ; ++index)
+            {
+                var timeSeconds = pitch.TotalSeconds * index;
+                if (timeSeconds >= musicDuration.TotalSeconds)
+                    break;
+                var isBold = index % interval == 0;
+                gridLines.Add(
+                    new WaveShapeViewGridLineViewModel
+                    {
+                        TimeSeconds = timeSeconds,
+                        Thickness = verticalLineTickness * (isBold ? 1.0 : 0.5),
+                    });
+            }
+
+            return new ObservableCollection<WaveShapeViewGridLineViewModel>(gridLines);
+        }
+
+        private static ObservableCollection<TimeStampViewElementViewModel> GetTimeStamps(TimeSpan musicDuration, double pixelsPerSeconds, Func<TimeSpan, string> timeFormatter)
+        {
+            var (pitch, interval) = GetGridLinePitch(pixelsPerSeconds);
+            var timeStamps = new List<TimeStampViewElementViewModel>();
+            for (var index = 0; ; index += interval)
+            {
+                var time = TimeSpan.FromTicks(pitch.Ticks * index);
+                if (time >= musicDuration)
+                    break;
+                timeStamps.Add(
+                    new TimeStampViewElementViewModel
+                    {
+                        TimeText = timeFormatter(time),
+                        HorizontalPositionPixels = pixelsPerSeconds * time.TotalSeconds,
+                    });
+            }
+
+            return new ObservableCollection<TimeStampViewElementViewModel>(timeStamps);
+        }
+
+        private static (TimeSpan pitch, int interval) GetGridLinePitch(double pixelsPerSeconds)
+        {
+            if (pixelsPerSeconds >= 3000)
+            {
+                // 細線は10ミリ秒, 太線は100ミリ秒
+                return (TimeSpan.FromMilliseconds(10), 10);
+            }
+            else if (pixelsPerSeconds >= 1500)
+            {
+                // 細線は20ミリ秒, 太線は200ミリ秒
+                return (TimeSpan.FromMilliseconds(20), 10);
+            }
+            else if (pixelsPerSeconds >= 600)
+            {
+                // 細線は50ミリ秒, 太線は500ミリ秒
+                return (TimeSpan.FromMilliseconds(50), 10);
+            }
+            else if (pixelsPerSeconds >= 300)
+            {
+                // 細線は100ミリ秒, 太線は1秒
+                return (TimeSpan.FromMilliseconds(100), 10);
+            }
+            else if (pixelsPerSeconds >= 150)
+            {
+                // 細線は200ミリ秒, 太線は2秒
+                return (TimeSpan.FromMilliseconds(200), 10);
+            }
+            else if (pixelsPerSeconds >= 60)
+            {
+                // 細線は500ミリ秒, 太線は5秒
+                return (TimeSpan.FromMilliseconds(500), 10);
+            }
+            else if (pixelsPerSeconds >= 30)
+            {
+                // 細線は1秒, 太線は10秒
+                return (TimeSpan.FromSeconds(1), 10);
+            }
+            else if (pixelsPerSeconds >= 15)
+            {
+                // 細線は2秒, 太線は20秒
+                return (TimeSpan.FromSeconds(2), 10);
+            }
+            else if (pixelsPerSeconds >= 6)
+            {
+                // 細線は5秒, 太線は30秒
+                return (TimeSpan.FromSeconds(5), 6);
+            }
+            else
+            {
+                // 細線は10秒, 太線は60秒
+                return (TimeSpan.FromSeconds(10), 6);
+            }
+        }
+
+        private void TimeStampViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
         {
             var c = (FrameworkElement)sender;
             if (e.WidthChanged)
             {
-                _viewModel.WaveViewHorizontalOffsetSeconds = c.ActualWidth / 2 / _viewModel.PixelsPerSeconds - _viewModel.MarkedTime.TotalSeconds;
-                _viewModel.WaveViewWidthSeconds = c.ActualWidth / _viewModel.PixelsPerSeconds;
+                _viewModel.WaveShapeViewHorizontalOffsetPixels = c.ActualWidth / 2 - _viewModel.MarkedTime.TotalSeconds * _viewModel.PixelsPerSeconds;
+            }
+        }
 
-                var gridLines = new List<WaveViewGridLineViewModel>();
-                var gridLineColor = (Color)ColorConverter.ConvertFromString("LightGray");
-                for (var time = TimeSpan.Zero; time <= _viewModel.MusicDuration; time += TimeSpan.FromMilliseconds(100))
-                {
-                    gridLines.Add(
-                        new WaveViewGridLineViewModel
-                        {
-                            TimeSeconds = time.TotalSeconds,
-                            Color = new SolidColorBrush(gridLineColor),
-                            Thickness = _viewModel.VerticalLineTickness,
-                        });
-                }
-
-                _viewModel.WaveViewGridLines = new ObservableCollection<WaveViewGridLineViewModel>(gridLines);
+        private void WaveShapeViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
+        {
+            var c = (FrameworkElement)sender;
+            if (e.WidthChanged)
+            {
+                _viewModel.WaveShapeViewHorizontalOffsetSeconds = c.ActualWidth / 2 / _viewModel.PixelsPerSeconds - _viewModel.MarkedTime.TotalSeconds;
+                _viewModel.WaveShapeViewWidthSeconds = c.ActualWidth / _viewModel.PixelsPerSeconds;
             }
 
             if (e.HeightChanged)

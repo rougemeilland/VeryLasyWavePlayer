@@ -269,40 +269,77 @@
                 </Border>
             </StackPanel>
             <MediaElement DockPanel.Dock="Bottom" Width="1" Height="1" Visibility="Collapsed" LoadedBehavior="Manual" x:Name="MusicPlayer" x:FieldModifier="private"/>
-            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  x:Name="WaveViewPanel" SizeChanged="WaveViewPanelSizeChangedEventHandler">
+            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Canvas.RenderTransform>
+                    <TranslateTransform X="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Y="0"/>
+                </Canvas.RenderTransform>
+            </Canvas>
+
+            <!-- タイムスタンプ -->
+            <ItemsControl DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="23" ItemsSource="{Binding Path=TimeStampsViewElements}" x:Name="TimeStampView" SizeChanged="TimeStampViewSizeChangedEventHandler">
+                <ItemsControl.RenderTransform>
+                    <TranslateTransform X="{Binding Path=WaveShapeViewHorizontalOffsetPixels}" Y="0"/>
+                </ItemsControl.RenderTransform>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas HorizontalAlignment="Stretch" Height="23"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style>
+                        <Setter Property="Canvas.Left" Value="{Binding Path=HorizontalPositionPixels}" />
+                        <Setter Property="Canvas.Top" Value="0" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Canvas Width="80" Height="23">
+                            <TextBlock Canvas.Left="-40" Text="{Binding Path=TimeText}" Height="23" Width="80" TextAlignment="Center" FontSize="20" FontFamily="Courier" Foreground="#555555"/>
+                        </Canvas>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- 波形グラフ -->
+            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="WaveShapeView" SizeChanged="WaveShapeViewSizeChangedEventHandler">
                 <Canvas.RenderTransform>
                     <ScaleTransform ScaleX="{Binding Path=PixelsPerSeconds}" ScaleY="{Binding Path=PixelsPerSampleData}"/>
                 </Canvas.RenderTransform>
 
                 <!-- 背景BOX -->
-                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=WaveViewWidthSeconds}" Height="1" Fill="#FFA6C0D6"/>
+                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=WaveShapeViewWidthSeconds}" Height="1" Fill="#FFA6C0D6"/>
 
                 <!-- 再生可能域 BOX -->
-                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" Width="{Binding Path=MusicDurationSeconds}" Height="1" Fill="Aqua"/>
+                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" Width="{Binding Path=MusicDurationSeconds}" Height="1" Fill="Aqua"/>
 
                 <!-- 波形ポリゴン -->
-                <Polygon Panel.ZIndex="3" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WavePanelWavePoints}"/>
+                <Polygon Panel.ZIndex="3" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WavePanelWavePoints}"/>
 
                 <!-- 時間グリッド -->
-                <ItemsControl Panel.ZIndex="4" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" ItemsSource="{Binding Path=WaveViewGridLines}">
+                <ItemsControl Panel.ZIndex="4" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" ItemsSource="{Binding Path=WaveShapeViewGridLines}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas Width="{Binding Path=MusicDurationSeconds}" Height="1"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Line X1="{Binding Path=TimeSeconds}" Y1="0" X2="{Binding Path=TimeSeconds}" Y2="1" Stroke="{Binding Path=Color}" StrokeThickness="{Binding Path=Thickness}"/>
+                            <Line X1="{Binding Path=TimeSeconds}" Y1="0" X2="{Binding Path=TimeSeconds}" Y2="1" Stroke="#FF7798AD" StrokeThickness="{Binding Path=Thickness}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                    
                 </ItemsControl>
 
                 <!-- 水平中心線 -->
-                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="0.5" X2="{Binding Path=WaveViewWidthSeconds}" Y2="0.5" StrokeThickness="{Binding Path=HorizontalLineTickness}" Stroke="White"/>
+                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="0.5" X2="{Binding Path=WaveShapeViewWidthSeconds}" Y2="0.5" StrokeThickness="{Binding Path=HorizontalLineTickness}" Stroke="White"/>
 
                 <!-- 再生位置垂直線 -->
-                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=PlayingTimeSeconds}" Y1="0" X2="{Binding Path=PlayingTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Yellow"/>
+                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=PlayingTimeSeconds}" Y1="0" X2="{Binding Path=PlayingTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Yellow"/>
 
                 <!-- 現在位置垂直線 -->
-                <Line Panel.ZIndex="7" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=MarkedTimeSeconds}" Y1="0" X2="{Binding Path=MarkedTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Red"/>
+                <Line Panel.ZIndex="7" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=MarkedTimeSeconds}" Y1="0" X2="{Binding Path=MarkedTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Red"/>
 
             </Canvas>
+
         </DockPanel>
     </DockPanel>
 </Window>

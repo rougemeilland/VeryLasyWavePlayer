@@ -11,23 +11,12 @@ namespace Experiment
     {
         private static int Main(string[] args)
         {
-            var data = File.ReadAllBytes(args[0]);
-            var container = WaveFileContainer.Deserialize(data);
-            Console.WriteLine($"{Path.GetFileName(args[0])}: totalFrames={container.TotalFrames}, channels={container.Channels}, sampleDataType={container.SampleDataType}, samplesPerSeconds={container.SamplesPerSeconds}, channelLayout={container.ChannelLayout}, validBitsPerSample={container.ValidBitsPerSample}");
-            var serializedData = container.Serialize();
-            for (var index = 0; index < 256; ++index)
+            for (int i = 0; i < 23; ++i)
             {
-                if (index > 0 && index % 16 == 0)
-                    Console.WriteLine();
-                Console.Write($" {serializedData[index]:x2}");
+                var x1 = 0.001 * i;
+                var x2 = Math.Round(x1, 2, MidpointRounding.ToEven);
+                Console.WriteLine($"x1={x1:F4}, x2={x2:F4}");
             }
-
-            Console.WriteLine();
-
-            var player = new MediaPlayer();
-            player.Open(new Uri(args[0]));
-            player.Position = TimeSpan.FromSeconds(30);
-            player.Play();
 
             return 0;
         }

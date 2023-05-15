@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 using WavePlayer.GUI.Properties;
@@ -18,9 +17,11 @@ namespace WavePlayer.GUI
         private bool _copiedMarkedTime;
         private PointCollection _wavePanelWavePoints;
         private double _pixelsPerSeconds;
-        private double _waveViewHorizontalOffsetSeconds;
-        private double _waveViewWidthSeconds;
-        private ObservableCollection<WaveViewGridLineViewModel> _waveViewGridLines;
+        private double _waveShapeViewHorizontalOffsetSeconds;
+        private double _waveShapeViewWidthSeconds;
+        private ObservableCollection<WaveShapeViewGridLineViewModel> _waveShapeViewGridLines;
+        private double _waveShapeViewHorizontalOffsetPixels;
+        private ObservableCollection<TimeStampViewElementViewModel> _timeStampsViewElements;
 
         public Command OpenCommand { get; set; }
         public Command ExitCommand { get; set; }
@@ -179,9 +180,10 @@ namespace WavePlayer.GUI
 
             set
             {
-                if (value != _markedTime)
+                var normalizedTime = NormalizeTime(value);
+                if (normalizedTime != _markedTime)
                 {
-                    _markedTime = value;
+                    _markedTime = normalizedTime;
                     RaisePropertyChangedEvent(nameof(MarkedTime));
                     RaisePropertyChangedEvent(nameof(MarkedTimeSeconds));
                     RaisePropertyChangedEvent(nameof(MarkedTimeText));
@@ -199,9 +201,10 @@ namespace WavePlayer.GUI
 
             set
             {
-                if (value != _playingTime)
+                var normalizedTime = NormalizeTime(value);
+                if (normalizedTime != _playingTime)
                 {
-                    _playingTime = value;
+                    _playingTime = normalizedTime;
                     RaisePropertyChangedEvent(nameof(PlayingTime));
                     RaisePropertyChangedEvent(nameof(PlayingTimeSeconds));
                     RaisePropertyChangedEvent(nameof(PlayingTimeText));
@@ -281,30 +284,30 @@ namespace WavePlayer.GUI
             }
         }
 
-        public double WaveViewHorizontalOffsetSeconds
+        public double WaveShapeViewHorizontalOffsetSeconds
         {
-            get => _waveViewHorizontalOffsetSeconds;
+            get => _waveShapeViewHorizontalOffsetSeconds;
 
             set
             {
-                if (value != _waveViewHorizontalOffsetSeconds)
+                if (value != _waveShapeViewHorizontalOffsetSeconds)
                 {
-                    _waveViewHorizontalOffsetSeconds = value;
-                    RaisePropertyChangedEvent(nameof(WaveViewHorizontalOffsetSeconds));
+                    _waveShapeViewHorizontalOffsetSeconds = value;
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewHorizontalOffsetSeconds));
                 }
             }
         }
 
-        public double WaveViewWidthSeconds
+        public double WaveShapeViewWidthSeconds
         {
-            get => _waveViewWidthSeconds;
+            get => _waveShapeViewWidthSeconds;
 
             set
             {
-                if (_waveViewWidthSeconds != value)
+                if (_waveShapeViewWidthSeconds != value)
                 {
-                    _waveViewWidthSeconds = value;
-                    RaisePropertyChangedEvent(nameof(WaveViewWidthSeconds));
+                    _waveShapeViewWidthSeconds = value;
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewWidthSeconds));
                 }
             }
         }
@@ -360,19 +363,47 @@ namespace WavePlayer.GUI
             }
         }
 
-        public ObservableCollection<WaveViewGridLineViewModel> WaveViewGridLines
+        public ObservableCollection<WaveShapeViewGridLineViewModel> WaveShapeViewGridLines
         {
-            get => _waveViewGridLines;
-            
+            get => _waveShapeViewGridLines;
+
             set
             {
-                _waveViewGridLines = value;
-                RaisePropertyChangedEvent(nameof(WaveViewGridLines));
+                _waveShapeViewGridLines = value;
+                RaisePropertyChangedEvent(nameof(WaveShapeViewGridLines));
             }
         }
 
-        private static string FormatTime(TimeSpan time)
+        public double WaveShapeViewHorizontalOffsetPixels
+        {
+            get => _waveShapeViewHorizontalOffsetPixels;
+
+            set
+            {
+                if (value != _waveShapeViewHorizontalOffsetPixels)
+                {
+                    _waveShapeViewHorizontalOffsetPixels = value;
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewHorizontalOffsetPixels));
+                }
+            }
+        }
+
+        public ObservableCollection<TimeStampViewElementViewModel> TimeStampsViewElements
+        {
+            get => _timeStampsViewElements;
+
+            set
+            {
+                _timeStampsViewElements = value;
+                RaisePropertyChangedEvent(nameof(TimeStampsViewElements));
+            }
+        }
+
+        public static string FormatTime(TimeSpan time)
             => $"{(int)Math.Floor(time.TotalMinutes):D2}:{time.Seconds:D2}.{time.Milliseconds / 10:D2}";
+
+        private static TimeSpan NormalizeTime(TimeSpan value)
+            => TimeSpan.FromSeconds(Math.Round(value.TotalSeconds, 2, MidpointRounding.ToEven));
 
         private static double NormalizePerSeconsaValue(double originalValue)
         {
