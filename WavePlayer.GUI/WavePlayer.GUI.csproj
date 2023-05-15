@@ -68,6 +68,8 @@
     </ApplicationDefinition>
     <Compile Include="AboutDialogWindowViewModel.cs" />
     <Compile Include="ComboBoxSelectionItem.cs" />
+    <Compile Include="MouseWheelDirection.cs" />
+    <Compile Include="MouseWheelGesture.cs" />
     <Compile Include="MusicPlayingStatusType.cs" />
     <Compile Include="SampleDataCollection.cs" />
     <Compile Include="ViewModel.cs" />

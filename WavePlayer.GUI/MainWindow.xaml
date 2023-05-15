@@ -28,6 +28,8 @@
         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding Path=CopyMarkerTextCommand}"/>
         <KeyBinding Key="PageUp" Command="{Binding Path=ExpandTimeLineCommand}"/>
         <KeyBinding Key="PageDown" Command="{Binding Path=ShrinkTimeLineCommand}"/>
+        <MouseBinding Gesture="{x:Static local:MouseWheelGesture.CtrlUp}" Command="{Binding Path=ExpandTimeLineCommand}"/>
+        <MouseBinding Gesture="{x:Static local:MouseWheelGesture.CtrlDown}" Command="{Binding Path=ShrinkTimeLineCommand}"/>
     </Window.InputBindings>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
