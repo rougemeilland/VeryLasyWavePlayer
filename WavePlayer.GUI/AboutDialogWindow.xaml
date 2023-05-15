@@ -1,0 +1,29 @@
+﻿<Window x:Class="WavePlayer.GUI.AboutDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WavePlayer.GUI"
+        mc:Ignorable="d"
+        Title="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.WINDOW_TITLE_ABOUT, Mode=OneWay}"
+        WindowStyle="ToolWindow"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner">
+    <StackPanel Orientation="Vertical" Margin="5">
+        <StackPanel Orientation="Horizontal" Margin="5">
+            <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_VERSION, Mode=OneWay}" Margin="3"/>
+            <TextBox VerticalAlignment="Center" Text="{Binding Version}" IsReadOnly="True" Padding="5"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="5">
+            <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_COPYRIGHT, Mode=OneWay}" Margin="3"/>
+            <TextBox VerticalAlignment="Center" Text="{Binding Copyright}" IsReadOnly="True" Padding="2"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="5">
+            <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_URL, Mode=OneWay}" Margin="3"/>
+            <TextBox VerticalAlignment="Center" TextWrapping="NoWrap" Text="{Binding Url}" IsReadOnly="True" Padding="2"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="2">
+            <Button VerticalAlignment="Center" Width="70" Content="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.BUTTON_TEXT_OK, Mode=OneWay}" Command="{Binding OkCommand}" Padding="5"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1,0 +1,309 @@
+﻿<Window x:Class="WavePlayer.GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:properties="clr-namespace:WavePlayer.GUI.Properties"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:local="clr-namespace:WavePlayer.GUI"
+        mc:Ignorable="d"
+        Title="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.WINDOW_TITLE_MAIN, Mode=OneWay}"
+        Height="300">
+    <Window.InputBindings>
+        <KeyBinding Key="F" Command="{Binding Path=OpenCommand}"/>
+        <KeyBinding Key="S" Command="{Binding Path=Play10msecAndPauseCommand}"/>
+        <KeyBinding Key="Space" Command="{Binding Path=PlayAndMoveMarkerCommand}"/>
+        <KeyBinding Key="Return" Command="{Binding Path=PlayFromMarkerCommand}"/>
+        <KeyBinding Key="Right" Command="{Binding Path=PositionForward100msecCommand}"/>
+        <KeyBinding Key="Left" Command="{Binding Path=PositionBackward100msecCommand}"/>
+        <KeyBinding Key="Right" Modifiers="Ctrl" Command="{Binding Path=PositionForward1secCommand}"/>
+        <KeyBinding Key="Left" Modifiers="Ctrl" Command="{Binding Path=PositionBackward1secCommand}"/>
+        <KeyBinding Key="Up" Command="{Binding Path=PositionForward10secCommand}"/>
+        <KeyBinding Key="Down" Command="{Binding Path=PositionBackward10secCommand}"/>
+        <KeyBinding Key="Up" Modifiers="Ctrl" Command="{Binding Path=PositionForward60secCommand}"/>
+        <KeyBinding Key="Down" Modifiers="Ctrl" Command="{Binding Path=PositionBackward60secCommand}"/>
+        <KeyBinding Key="Home" Command="{Binding Path=PositionHomeCommand}"/>
+        <KeyBinding Key="Add" Command="{Binding Path=VolumeUpCommand}"/>
+        <KeyBinding Key="Subtract" Command="{Binding Path=VolumeDownCommand}"/>
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding Path=CopyMarkerTextCommand}"/>
+        <KeyBinding Key="PageUp" Command="{Binding Path=ExpandTimeLineCommand}"/>
+        <KeyBinding Key="PageDown" Command="{Binding Path=ShrinkTimeLineCommand}"/>
+    </Window.InputBindings>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_FILE, Mode=OneWay}">
+                <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_OPEN, Mode=OneWay}" Command="{Binding Path=OpenCommand}"/>
+                <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_EXIT, Mode=OneWay}" Command="{Binding Path=ExitCommand}"/>
+            </MenuItem>
+            <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_TOOL, Mode=OneWay}">
+                <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_OPTION, Mode=OneWay}" Command="{Binding Path=OptionCommand}"/>
+            </MenuItem>
+            <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_ABOUT, Mode=OneWay}" Command="{Binding Path=AboutCommand}"/>
+        </Menu>
+        <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="LightGray">
+            <Border DockPanel.Dock="Left" BorderBrush="Black" BorderThickness="1" Padding="2">
+                <Border.Style>
+                    <Style TargetType="{x:Type Border}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsValidMusicPlayingStatus}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Path=IsValidMusicPlayingStatus}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding Path=MusicPlayingStatusText}" Margin="2"/>
+            </Border>
+            <Border DockPanel.Dock="Right" BorderBrush="Black" BorderThickness="1" Padding="2" Margin="5 0 0 0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_VOLUME, Mode=OneWay}" Margin="0.5 0.5 2 0.5"/>
+                    <TextBlock Background="#FF2103F9" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel1}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel1}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FF046BF5" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel2}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel2}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FF04C7F9" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel3}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel3}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FF04F9B0" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel4}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel4}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FF03F98E" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel5}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel5}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FF02F511" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel6}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel6}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FF78F104" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel7}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel7}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FFE8F504" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel8}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel8}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FFFBAD03" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel9}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel9}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Background="#FFFB1105" Width="3" Margin="0.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel10}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=VolumeLevel10}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+            <Border BorderBrush="Black" BorderThickness="1" Padding="2" Margin="5 0 0 0">
+                <Border.Style>
+                    <Style TargetType="{x:Type Border}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsLoadedMusicFile}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Path=IsLoadedMusicFile}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.STATUS_LABEL_MUSIC_FILE_PATH, Mode=OneWay}" Margin="2"/>
+                    <TextBlock Text="{Binding Path=CurrentMusicFilePath}" Margin="2"/>
+                </StackPanel>
+            </Border>
+        </DockPanel>
+        <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <DockPanel.Style>
+                <Style TargetType="DockPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=IsVisiblePlayView}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=IsVisiblePlayView}" Value="False">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DockPanel.Style>
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_MARKER_POSITION, Mode=OneWay}" Margin="3"/>
+                <Border BorderBrush="DarkGray" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=CopiedMarkedTime}" Value="True">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(Border.Opacity)" RepeatBehavior="2x" AutoReverse="True">
+                                                    <LinearDoubleKeyFrame KeyTime="0:0:0.5" Value="0.25" />
+                                                    <LinearDoubleKeyFrame KeyTime="0:0:1.0" Value="1" />
+                                                </DoubleAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Vertical">
+                        <Popup IsOpen="{Binding Path=CopiedMarkedTime}" StaysOpen="True" PlacementTarget="{Binding ElementName=MarkedTimeTextBlock}" VerticalOffset="6" AllowsTransparency="True">
+                            <Border BorderBrush="#777777" Background="White" BorderThickness="1" CornerRadius="5">
+                                <TextBlock Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MESSAGE_TEXT_COPIED_TO_CLIPBOARD, Mode=OneWay}" Foreground="#333333" Margin="5"/>
+                            </Border>
+                        </Popup>
+                        <TextBlock x:Name="MarkedTimeTextBlock" VerticalAlignment="Center" Text="{Binding Path=MarkedTimeText}" Margin="3"/>
+                    </StackPanel>
+                </Border>
+                <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_PLAYING_POSITION, Mode=OneWay}" Margin="10 3 3 3"/>
+                <Border BorderBrush="DarkGray" BorderThickness="1">
+                    <TextBlock VerticalAlignment="Center" Text="{Binding Path=PlayingTimeText}" Margin="3"/>
+                </Border>
+            </StackPanel>
+            <MediaElement DockPanel.Dock="Bottom" Width="1" Height="1" Visibility="Collapsed" LoadedBehavior="Manual" x:Name="MusicPlayer" x:FieldModifier="private"/>
+            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  x:Name="WaveViewPanel" SizeChanged="WaveViewPanelSizeChangedEventHandler">
+                <Canvas.RenderTransform>
+                    <ScaleTransform ScaleX="{Binding Path=PixelsPerSeconds}" ScaleY="{Binding Path=PixelsPerSampleData}"/>
+                </Canvas.RenderTransform>
+
+                <!-- 背景BOX -->
+                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=WaveViewWidthSeconds}" Height="1" Fill="#FFA6C0D6"/>
+
+                <!-- 再生可能域 BOX -->
+                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" Width="{Binding Path=MusicDurationSeconds}" Height="1" Fill="Aqua"/>
+
+                <!-- 波形ポリゴン -->
+                <Polygon Panel.ZIndex="3" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WavePanelWavePoints}"/>
+
+                <!-- 時間グリッド -->
+                <ItemsControl Panel.ZIndex="4" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" ItemsSource="{Binding Path=WaveViewGridLines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Line X1="{Binding Path=TimeSeconds}" Y1="0" X2="{Binding Path=TimeSeconds}" Y2="1" Stroke="{Binding Path=Color}" StrokeThickness="{Binding Path=Thickness}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    
+                </ItemsControl>
+
+                <!-- 水平中心線 -->
+                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="0.5" X2="{Binding Path=WaveViewWidthSeconds}" Y2="0.5" StrokeThickness="{Binding Path=HorizontalLineTickness}" Stroke="White"/>
+
+                <!-- 再生位置垂直線 -->
+                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=PlayingTimeSeconds}" Y1="0" X2="{Binding Path=PlayingTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Yellow"/>
+
+                <!-- 現在位置垂直線 -->
+                <Line Panel.ZIndex="7" Canvas.Left="{Binding Path=WaveViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=MarkedTimeSeconds}" Y1="0" X2="{Binding Path=MarkedTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Red"/>
+
+            </Canvas>
+        </DockPanel>
+    </DockPanel>
+</Window>
+    
