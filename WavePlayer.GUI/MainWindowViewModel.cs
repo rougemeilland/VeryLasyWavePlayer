@@ -26,6 +26,12 @@ namespace WavePlayer.GUI
         private double _overViewMagnification;
         private double _overViewMarkedRangeLeftPixels;
         private double _overViewMarkedRangeWidthPixels;
+        private double _waveShapeViewActualWidth;
+        private double _waveShapeViewActualHeight;
+        private double _overViewActualWidth;
+        private double _overViewActualHeight;
+        private double _timeStampsViewActualWidth;
+        private double _timeStampsViewActualHeight;
 
         public Command OpenCommand { get; set; }
         public Command ExitCommand { get; set; }
@@ -288,6 +294,158 @@ namespace WavePlayer.GUI
             }
         }
 
+        public double OverViewActualWidth
+        {
+            get => _overViewActualWidth;
+
+            set
+            {
+                if (value != _overViewActualWidth)
+                {
+                    _overViewActualWidth = value;
+                    RaisePropertyChangedEvent(nameof(OverViewActualWidth));
+                }
+            }
+        }
+
+        public double OverViewActualHeight
+        {
+            get => _overViewActualHeight;
+
+            set
+            {
+                if (value != _overViewActualHeight)
+                {
+
+                    _overViewActualHeight = value;
+                    RaisePropertyChangedEvent(nameof(OverViewActualHeight));
+                }
+            }
+        }
+
+        public double OverViewMagnification
+        {
+            get => _overViewMagnification;
+
+            set
+            {
+                if (value != _overViewMagnification)
+                {
+                    _overViewMagnification = value;
+                    RaisePropertyChangedEvent(nameof(OverViewMagnification));
+                }
+            }
+        }
+
+        public double OverViewWidthPixels
+        {
+            get => _overViewWidthPixels;
+
+            set
+            {
+                if (value != _overViewWidthPixels)
+                {
+                    _overViewWidthPixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewWidthPixels));
+                }
+            }
+        }
+
+        public double OverViewMarkedRangeLeftPixels
+        {
+            get => _overViewMarkedRangeLeftPixels;
+
+            set
+            {
+                if (value != _overViewMarkedRangeLeftPixels)
+                {
+                    _overViewMarkedRangeLeftPixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeLeftPixels));
+                }
+            }
+        }
+
+        public double OverViewMarkedRangeWidthPixels
+        {
+            get => _overViewMarkedRangeWidthPixels;
+
+            set
+            {
+                if (value != _overViewMarkedRangeWidthPixels)
+                {
+                    _overViewMarkedRangeWidthPixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeWidthPixels));
+                }
+            }
+        }
+
+        public double TimeStampsViewActualWidth
+        {
+            get => _timeStampsViewActualWidth;
+
+            set
+            {
+                if (value != _timeStampsViewActualWidth)
+                {
+                    _timeStampsViewActualWidth = value;
+                    RaisePropertyChangedEvent(nameof(TimeStampsViewActualWidth));
+                }
+            }
+        }
+
+        public double TimeStampsViewActualHeight
+        {
+            get => _timeStampsViewActualHeight;
+
+            set
+            {
+                if (value != _timeStampsViewActualHeight)
+                {
+                    _timeStampsViewActualHeight = value;
+                    RaisePropertyChangedEvent(nameof(TimeStampsViewActualHeight));
+                }
+            }
+        }
+
+        public ObservableCollection<TimeStampViewElementViewModel> TimeStampsViewElements
+        {
+            get => _timeStampsViewElements;
+
+            set
+            {
+                _timeStampsViewElements = value;
+                RaisePropertyChangedEvent(nameof(TimeStampsViewElements));
+            }
+        }
+
+        public double WaveShapeViewActualWidth
+        {
+            get => _waveShapeViewActualWidth;
+
+            set
+            {
+                if (value != _waveShapeViewActualWidth)
+                {
+                    _waveShapeViewActualWidth = value;
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewActualWidth));
+                }
+            }
+        }
+
+        public double WaveShapeViewActualHeight
+        {
+            get => _waveShapeViewActualHeight;
+
+            set
+            {
+                if (value != _waveShapeViewActualHeight)
+                {
+                    _waveShapeViewActualHeight = value;
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewActualHeight));
+                }
+            }
+        }
+
         public double WaveShapeViewHorizontalOffsetSeconds
         {
             get => _waveShapeViewHorizontalOffsetSeconds;
@@ -361,17 +519,6 @@ namespace WavePlayer.GUI
         public double HorizontalLineTickness => 2.0 / WaveShapeViewPixelsPerSampleData;
         public double VerticalLineTickness => 2.0 / WaveShapeViewPixelsPerSeconds;
 
-        public PointCollection WaveShapePoints
-        {
-            get => _waveShapePoints;
-
-            set
-            {
-                _waveShapePoints = value;
-                RaisePropertyChangedEvent(nameof(WaveShapePoints));
-            }
-        }
-
         public ObservableCollection<WaveShapeViewGridLineViewModel> WaveShapeViewGridLines
         {
             get => _waveShapeViewGridLines;
@@ -397,75 +544,19 @@ namespace WavePlayer.GUI
             }
         }
 
-        public ObservableCollection<TimeStampViewElementViewModel> TimeStampsViewElements
+        public PointCollection WaveShapePoints
         {
-            get => _timeStampsViewElements;
+            get => _waveShapePoints;
 
             set
             {
-                _timeStampsViewElements = value;
-                RaisePropertyChangedEvent(nameof(TimeStampsViewElements));
-            }
-        }
-
-        public double OverViewMagnification
-        {
-            get => _overViewMagnification;
-            
-            set
-            {
-                if (value != _overViewMagnification)
-                {
-                    _overViewMagnification = value;
-                    RaisePropertyChangedEvent(nameof(OverViewMagnification));
-                }
-            }
-        }
-
-        public double OverViewWidthPixels
-        {
-            get => _overViewWidthPixels;
-            
-            set
-            {
-                if (value != _overViewWidthPixels)
-                {
-                    _overViewWidthPixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewWidthPixels));
-                }
-            }
-        }
-
-        public double OverViewMarkedRangeLeftPixels
-        {
-            get => _overViewMarkedRangeLeftPixels;
-            
-            set
-            {
-                if (value != _overViewMarkedRangeLeftPixels)
-                {
-                    _overViewMarkedRangeLeftPixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeLeftPixels));
-                }
-            }
-        }
-
-        public double OverViewMarkedRangeWidthPixels
-        {
-            get => _overViewMarkedRangeWidthPixels;
-            
-            set
-            {
-                if (value != _overViewMarkedRangeWidthPixels)
-                {
-                    _overViewMarkedRangeWidthPixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeWidthPixels));
-                }
+                _waveShapePoints = value;
+                RaisePropertyChangedEvent(nameof(WaveShapePoints));
             }
         }
 
         public static string FormatTime(TimeSpan time)
-            => $"{(int)Math.Floor(time.TotalMinutes):D2}:{time.Seconds:D2}.{time.Milliseconds / 10:D2}";
+            => $"{(int)Math.Floor(time.TotalMinutes):D2}:{time.Seconds:D2}.{(int)Math.Round(time.Milliseconds / 10.0, 0, MidpointRounding.ToEven):D2}";
 
         private static TimeSpan NormalizeTime(TimeSpan value)
             => TimeSpan.FromSeconds(Math.Round(value.TotalSeconds, 2, MidpointRounding.ToEven));

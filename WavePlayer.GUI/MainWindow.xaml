@@ -273,7 +273,7 @@
             <MediaElement DockPanel.Dock="Bottom" Width="1" Height="1" Visibility="Collapsed" LoadedBehavior="Manual" x:Name="MusicPlayer" x:FieldModifier="private"/>
 
             <!-- オーバービュー -->
-            <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" x:Name="OverView" SizeChanged="OverViewSizeChangedEventHandler">
+            <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" SizeChanged="OverViewSizeChangedEventHandler">
                 <!-- 背景BOX -->
                 <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=OverViewWidthPixels}" Height="30" Fill="#FFA6C0D6"/>
 
@@ -289,7 +289,7 @@
             </Canvas>
             
             <!-- タイムスタンプ -->
-            <ItemsControl DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="23" ItemsSource="{Binding Path=TimeStampsViewElements}" x:Name="TimeStampView" SizeChanged="TimeStampViewSizeChangedEventHandler">
+            <ItemsControl DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="23" ItemsSource="{Binding Path=TimeStampsViewElements}" SizeChanged="TimeStampViewSizeChangedEventHandler">
                 <ItemsControl.RenderTransform>
                     <TranslateTransform X="{Binding Path=WaveShapeViewHorizontalOffsetPixels}" Y="0"/>
                 </ItemsControl.RenderTransform>
@@ -314,7 +314,7 @@
             </ItemsControl>
 
             <!-- 波形グラフ -->
-            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="WaveShapeView" SizeChanged="WaveShapeViewSizeChangedEventHandler">
+            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SizeChanged="WaveShapeViewSizeChangedEventHandler">
                 <Canvas.RenderTransform>
                     <ScaleTransform ScaleX="{Binding Path=WaveShapeViewPixelsPerSeconds}" ScaleY="{Binding Path=WaveShapeViewPixelsPerSampleData}"/>
                 </Canvas.RenderTransform>

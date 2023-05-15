@@ -380,16 +380,15 @@ namespace WavePlayer.GUI
                                 break;
                         }
                     };
-            _viewModel.WaveShapeViewPixelsPerSeconds = 125;
 
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
                     switch (e.PropertyName)
                     {
-                        case nameof(_viewModel.MarkedTime):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.WaveShapeViewHorizontalOffsetSeconds = WaveShapeView.ActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds - _viewModel.MarkedTime.TotalSeconds;
+                        case nameof(_viewModel.MusicDurationSeconds):
+                        case nameof(_viewModel.OverViewActualWidth):
+                            _viewModel.OverViewMagnification = _viewModel.OverViewActualWidth / _viewModel.MusicDurationSeconds;
                             break;
                         default:
                             break;
@@ -401,8 +400,48 @@ namespace WavePlayer.GUI
                 {
                     switch (e.PropertyName)
                     {
+                        case nameof(_viewModel.MarkedTimeSeconds):
+                        case nameof(_viewModel.MusicDurationSeconds):
+                        case nameof(_viewModel.OverViewActualWidth):
+                        case nameof(_viewModel.WaveShapeViewActualWidth):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.WaveShapeViewWidthSeconds = WaveShapeView.ActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds;
+                            _viewModel.OverViewMarkedRangeLeftPixels =
+                                (_viewModel.MarkedTimeSeconds - _viewModel.WaveShapeViewActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds)
+                                / _viewModel.MusicDurationSeconds
+                                * _viewModel.OverViewActualWidth;
+                            break;
+                        default:
+                            break;
+                    }
+                };
+
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.WaveShapeViewActualWidth):
+                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
+                        case nameof(_viewModel.MusicDurationSeconds):
+                        case nameof(_viewModel.OverViewActualWidth):
+                            _viewModel.OverViewMarkedRangeWidthPixels =
+                                _viewModel.WaveShapeViewActualWidth
+                                / _viewModel.WaveShapeViewPixelsPerSeconds
+                                / _viewModel.MusicDurationSeconds
+                                * _viewModel.OverViewActualWidth;
+                            break;
+                        default:
+                            break;
+                    }
+                };
+
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.OverViewActualWidth):
+                            _viewModel.OverViewWidthPixels = _viewModel.OverViewActualWidth;
                             break;
                         default:
                             break;
@@ -416,8 +455,8 @@ namespace WavePlayer.GUI
                     {
                         case nameof(_viewModel.MusicDuration):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.WaveShapeViewGridLines = GetGridLines(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, _viewModel.VerticalLineTickness);
-                            _viewModel.TimeStampsViewElements = GetTimeStamps(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, time => MainWindowViewModel.FormatTime(time));
+                            _viewModel.TimeStampsViewElements =
+                                GetTimeStamps(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, time => MainWindowViewModel.FormatTime(time));
                             break;
                         default:
                             break;
@@ -429,22 +468,11 @@ namespace WavePlayer.GUI
                 {
                     switch (e.PropertyName)
                     {
-                        case nameof(_viewModel.MarkedTime):
+                        case nameof(_viewModel.MusicDuration):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.WaveShapeViewHorizontalOffsetPixels = TimeStampView.ActualWidth / 2 - _viewModel.MarkedTime.TotalSeconds * _viewModel.WaveShapeViewPixelsPerSeconds;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MusicDurationSeconds):
-                            _viewModel.OverViewMagnification = OverView.ActualWidth / _viewModel.MusicDurationSeconds;
+                        case nameof(_viewModel.VerticalLineTickness):
+                            _viewModel.WaveShapeViewGridLines =
+                                GetGridLines(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, _viewModel.VerticalLineTickness);
                             break;
                         default:
                             break;
@@ -457,9 +485,11 @@ namespace WavePlayer.GUI
                     switch (e.PropertyName)
                     {
                         case nameof(_viewModel.MarkedTimeSeconds):
+                        case nameof(_viewModel.TimeStampsViewActualWidth):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                        case nameof(_viewModel.MusicDurationSeconds):
-                            _viewModel.OverViewMarkedRangeLeftPixels = (_viewModel.MarkedTimeSeconds - WaveShapeView.ActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds) / _viewModel.MusicDurationSeconds * OverView.ActualWidth;
+                            _viewModel.WaveShapeViewHorizontalOffsetPixels =
+                                _viewModel.TimeStampsViewActualWidth / 2
+                                - _viewModel.MarkedTimeSeconds * _viewModel.WaveShapeViewPixelsPerSeconds;
                             break;
                         default:
                             break;
@@ -471,9 +501,38 @@ namespace WavePlayer.GUI
                 {
                     switch (e.PropertyName)
                     {
+                        case nameof(_viewModel.MarkedTimeSeconds):
+                        case nameof(_viewModel.WaveShapeViewActualWidth):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                        case nameof(_viewModel.MusicDurationSeconds):
-                            _viewModel.OverViewMarkedRangeWidthPixels = WaveShapeView.ActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds / _viewModel.MusicDurationSeconds * OverView.ActualWidth;
+                            _viewModel.WaveShapeViewHorizontalOffsetSeconds =
+                                _viewModel.WaveShapeViewActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds - _viewModel.MarkedTimeSeconds;
+                            break;
+                        default:
+                            break;
+                    }
+                };
+
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.WaveShapeViewActualHeight):
+                            _viewModel.WaveShapeViewPixelsPerSampleData = _viewModel.WaveShapeViewActualHeight;
+                            break;
+                        default:
+                            break;
+                    }
+                };
+
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.WaveShapeViewActualWidth):
+                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
+                            _viewModel.WaveShapeViewWidthSeconds = _viewModel.WaveShapeViewActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds;
                             break;
                         default:
                             break;
@@ -496,7 +555,6 @@ namespace WavePlayer.GUI
 
             _10msecIntervalTimer.Start();
 
-            // TODO: Ctrl+マウスホイールでの拡大縮小
             // TODO: オーバービューをクリックするとその付近にマーカーを移動
             // TODO: 波形ビューをクリックするとその付近にマーカーを移動
             // TODO: 再生時にスムーズスクロールをする
@@ -726,38 +784,27 @@ namespace WavePlayer.GUI
         {
             var c = (FrameworkElement)sender;
             if (e.WidthChanged)
-            {
-                _viewModel.OverViewMagnification = c.ActualWidth / _viewModel.MusicDurationSeconds;
-                _viewModel.OverViewWidthPixels = c.ActualWidth;
-                _viewModel.OverViewMarkedRangeLeftPixels = (_viewModel.MarkedTimeSeconds - WaveShapeView.ActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds) / _viewModel.MusicDurationSeconds * c.ActualWidth;
-                _viewModel.OverViewMarkedRangeWidthPixels = WaveShapeView.ActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds / _viewModel.MusicDurationSeconds * c.ActualWidth;
-            }
+                _viewModel.OverViewActualWidth = c.ActualWidth;
+            if (e.HeightChanged)
+                _viewModel.OverViewActualHeight = c.ActualHeight;
         }
 
         private void TimeStampViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
         {
             var c = (FrameworkElement)sender;
             if (e.WidthChanged)
-            {
-                _viewModel.WaveShapeViewHorizontalOffsetPixels = c.ActualWidth / 2 - _viewModel.MarkedTime.TotalSeconds * _viewModel.WaveShapeViewPixelsPerSeconds;
-            }
+                _viewModel.TimeStampsViewActualWidth = c.ActualWidth;
+            if (e.HeightChanged)
+                _viewModel.TimeStampsViewActualHeight = c.ActualHeight;
         }
 
         private void WaveShapeViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
         {
             var c = (FrameworkElement)sender;
             if (e.WidthChanged)
-            {
-                _viewModel.WaveShapeViewHorizontalOffsetSeconds = c.ActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds - _viewModel.MarkedTime.TotalSeconds;
-                _viewModel.WaveShapeViewWidthSeconds = c.ActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds;
-                _viewModel.OverViewMarkedRangeLeftPixels = (_viewModel.MarkedTimeSeconds - c.ActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds) / _viewModel.MusicDurationSeconds * OverView.ActualWidth;
-                _viewModel.OverViewMarkedRangeWidthPixels = c.ActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds / _viewModel.MusicDurationSeconds * OverView.ActualWidth;
-            }
-
+                _viewModel.WaveShapeViewActualWidth = c.ActualWidth;
             if (e.HeightChanged)
-            {
-                _viewModel.WaveShapeViewPixelsPerSampleData = c.ActualHeight;
-            }
+                _viewModel.WaveShapeViewActualHeight = c.ActualHeight;
         }
     }
 }
