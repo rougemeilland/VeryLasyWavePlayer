@@ -6,15 +6,6 @@
         xmlns:local="clr-namespace:Experiment.WPF"
         mc:Ignorable="d"
         Title="MainWindow" Width="1000" Height="500">
-    <Grid x:Name="WaveViewGrid" SizeChanged="Grid_SizeChanged">
-        <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="AliceBlue" ClipToBounds="True">
-            <Canvas.RenderTransform>
-                <ScaleTransform ScaleX="{Binding PixelsPerSeconds}" ScaleY="{Binding PixelsPerSampleData}"/>
-            </Canvas.RenderTransform>
-            <Rectangle Panel.ZIndex="1" Fill="Aqua" Canvas.Left="{Binding WaveAreaLeftSeconds}" Canvas.Top="0" Width="{Binding DurationSeconds}" Height="1"/>
-            <Polygon Panel.ZIndex="2" Fill="DarkBlue" Canvas.Left="{Binding WaveAreaLeftSeconds}" Canvas.Top="0" x:Name="WaveShape"/>
-            <Line Panel.ZIndex="3" StrokeThickness="{Binding HorizontalLineTickness}" Stroke="White" X1="0" Y1="0.5" X2="{Binding WaveAreaWidthSeconds}" Y2="0.5"/>
-            <Line Panel.ZIndex="4" StrokeThickness="{Binding VerticalLineTickness}" Stroke="Red" X1="{Binding WaveAreaMarkerSeconds}" Y1="0" X2="{Binding WaveAreaMarkerSeconds}" Y2="1"/>
-        </Canvas>
+    <Grid>
     </Grid>
 </Window>

@@ -15,13 +15,17 @@ namespace WavePlayer.GUI
         private TimeSpan _markedTime;
         private TimeSpan _musicDuration;
         private bool _copiedMarkedTime;
-        private PointCollection _wavePanelWavePoints;
-        private double _pixelsPerSeconds;
+        private PointCollection _waveShapePoints;
+        private double _waveShapeViewPixelsPerSampleData;
         private double _waveShapeViewHorizontalOffsetSeconds;
         private double _waveShapeViewWidthSeconds;
         private ObservableCollection<WaveShapeViewGridLineViewModel> _waveShapeViewGridLines;
         private double _waveShapeViewHorizontalOffsetPixels;
         private ObservableCollection<TimeStampViewElementViewModel> _timeStampsViewElements;
+        private double _overViewWidthPixels;
+        private double _overViewMagnification;
+        private double _overViewMarkedRangeLeftPixels;
+        private double _overViewMarkedRangeWidthPixels;
 
         public Command OpenCommand { get; set; }
         public Command ExitCommand { get; set; }
@@ -311,55 +315,60 @@ namespace WavePlayer.GUI
                 }
             }
         }
-        public double PixelsPerSeconds
-        {
-            get => _pixelsPerSeconds;
-
-            set
-            {
-                if (value != _pixelsPerSeconds)
-                {
-                    _pixelsPerSeconds = value;
-                    RaisePropertyChangedEvent(nameof(PixelsPerSeconds));
-                    RaisePropertyChangedEvent(nameof(VerticalLineTickness));
-                }
-            }
-        }
-
-        public double PixelsPerSampleData
+        public double WaveShapeViewPixelsPerSeconds
         {
             get
             {
-                var value = Settings.Default.WavePanelPixelsPerSeconds;
+                var value = Settings.Default.WaveShapeViewPixelsPerSeconds;
                 var normalizedValue = NormalizePerSeconsaValue(value);
                 if (normalizedValue != value)
-                    Settings.Default.WavePanelPixelsPerSeconds = normalizedValue;
+                {
+                    Settings.Default.WaveShapeViewPixelsPerSeconds = normalizedValue;
+                    Settings.Default.Save();
+                }
+
                 return normalizedValue;
             }
 
             set
             {
                 var normalizedValue = NormalizePerSeconsaValue(value);
-                if (normalizedValue != Settings.Default.WavePanelPixelsPerSeconds)
+                if (normalizedValue != Settings.Default.WaveShapeViewPixelsPerSeconds)
                 {
-                    Settings.Default.WavePanelPixelsPerSeconds = normalizedValue;
-                    RaisePropertyChangedEvent(nameof(PixelsPerSampleData));
+                    Settings.Default.WaveShapeViewPixelsPerSeconds = normalizedValue;
+                    Settings.Default.Save();
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewPixelsPerSeconds));
+                    RaisePropertyChangedEvent(nameof(VerticalLineTickness));
+                }
+            }
+        }
+
+        public double WaveShapeViewPixelsPerSampleData
+        {
+            get => _waveShapeViewPixelsPerSampleData;
+
+            set
+            {
+                if (value != _waveShapeViewPixelsPerSampleData)
+                {
+                    _waveShapeViewPixelsPerSampleData = value;
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewPixelsPerSampleData));
                     RaisePropertyChangedEvent(nameof(HorizontalLineTickness));
                 }
             }
         }
 
-        public double HorizontalLineTickness => 2.0 / PixelsPerSampleData;
-        public double VerticalLineTickness => 2.0 / PixelsPerSeconds;
+        public double HorizontalLineTickness => 2.0 / WaveShapeViewPixelsPerSampleData;
+        public double VerticalLineTickness => 2.0 / WaveShapeViewPixelsPerSeconds;
 
-        public PointCollection WavePanelWavePoints
+        public PointCollection WaveShapePoints
         {
-            get => _wavePanelWavePoints;
+            get => _waveShapePoints;
 
             set
             {
-                _wavePanelWavePoints = value;
-                RaisePropertyChangedEvent(nameof(WavePanelWavePoints));
+                _waveShapePoints = value;
+                RaisePropertyChangedEvent(nameof(WaveShapePoints));
             }
         }
 
@@ -396,6 +405,62 @@ namespace WavePlayer.GUI
             {
                 _timeStampsViewElements = value;
                 RaisePropertyChangedEvent(nameof(TimeStampsViewElements));
+            }
+        }
+
+        public double OverViewMagnification
+        {
+            get => _overViewMagnification;
+            
+            set
+            {
+                if (value != _overViewMagnification)
+                {
+                    _overViewMagnification = value;
+                    RaisePropertyChangedEvent(nameof(OverViewMagnification));
+                }
+            }
+        }
+
+        public double OverViewWidthPixels
+        {
+            get => _overViewWidthPixels;
+            
+            set
+            {
+                if (value != _overViewWidthPixels)
+                {
+                    _overViewWidthPixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewWidthPixels));
+                }
+            }
+        }
+
+        public double OverViewMarkedRangeLeftPixels
+        {
+            get => _overViewMarkedRangeLeftPixels;
+            
+            set
+            {
+                if (value != _overViewMarkedRangeLeftPixels)
+                {
+                    _overViewMarkedRangeLeftPixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeLeftPixels));
+                }
+            }
+        }
+
+        public double OverViewMarkedRangeWidthPixels
+        {
+            get => _overViewMarkedRangeWidthPixels;
+            
+            set
+            {
+                if (value != _overViewMarkedRangeWidthPixels)
+                {
+                    _overViewMarkedRangeWidthPixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeWidthPixels));
+                }
             }
         }
 

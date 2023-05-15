@@ -269,12 +269,23 @@
                 </Border>
             </StackPanel>
             <MediaElement DockPanel.Dock="Bottom" Width="1" Height="1" Visibility="Collapsed" LoadedBehavior="Manual" x:Name="MusicPlayer" x:FieldModifier="private"/>
-            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <Canvas.RenderTransform>
-                    <TranslateTransform X="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Y="0"/>
-                </Canvas.RenderTransform>
-            </Canvas>
 
+            <!-- オーバービュー -->
+            <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" x:Name="OverView" SizeChanged="OverViewSizeChangedEventHandler">
+                <!-- 背景BOX -->
+                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=OverViewWidthPixels}" Height="30" Fill="#FFA6C0D6"/>
+
+                <!-- 再生可能域 BOX -->
+                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=OverViewMarkedRangeLeftPixels}" Canvas.Top="0" Width="{Binding Path=OverViewMarkedRangeWidthPixels}" Height="30" Fill="Aqua"/>
+
+                <!-- 波形ポリゴン -->
+                <Polygon Panel.ZIndex="3" Canvas.Left="0" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WaveShapePoints}">
+                    <Polygon.RenderTransform>
+                        <ScaleTransform ScaleX="{Binding Path=OverViewMagnification}" ScaleY="30"/>
+                    </Polygon.RenderTransform>
+                </Polygon>
+            </Canvas>
+            
             <!-- タイムスタンプ -->
             <ItemsControl DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="23" ItemsSource="{Binding Path=TimeStampsViewElements}" x:Name="TimeStampView" SizeChanged="TimeStampViewSizeChangedEventHandler">
                 <ItemsControl.RenderTransform>
@@ -303,7 +314,7 @@
             <!-- 波形グラフ -->
             <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="WaveShapeView" SizeChanged="WaveShapeViewSizeChangedEventHandler">
                 <Canvas.RenderTransform>
-                    <ScaleTransform ScaleX="{Binding Path=PixelsPerSeconds}" ScaleY="{Binding Path=PixelsPerSampleData}"/>
+                    <ScaleTransform ScaleX="{Binding Path=WaveShapeViewPixelsPerSeconds}" ScaleY="{Binding Path=WaveShapeViewPixelsPerSampleData}"/>
                 </Canvas.RenderTransform>
 
                 <!-- 背景BOX -->
@@ -313,7 +324,7 @@
                 <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" Width="{Binding Path=MusicDurationSeconds}" Height="1" Fill="Aqua"/>
 
                 <!-- 波形ポリゴン -->
-                <Polygon Panel.ZIndex="3" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WavePanelWavePoints}"/>
+                <Polygon Panel.ZIndex="3" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WaveShapePoints}"/>
 
                 <!-- 時間グリッド -->
                 <ItemsControl Panel.ZIndex="4" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" ItemsSource="{Binding Path=WaveShapeViewGridLines}">

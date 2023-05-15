@@ -161,12 +161,12 @@ namespace WavePlayer.GUI.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("-1")]
-        public double WavePanelPixelsPerSeconds {
+        public double WaveShapeViewPixelsPerSeconds {
             get {
-                return ((double)(this["WavePanelPixelsPerSeconds"]));
+                return ((double)(this["WaveShapeViewPixelsPerSeconds"]));
             }
             set {
-                this["WavePanelPixelsPerSeconds"] = value;
+                this["WaveShapeViewPixelsPerSeconds"] = value;
             }
         }
     }

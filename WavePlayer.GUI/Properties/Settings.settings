@@ -38,7 +38,7 @@
     <Setting Name="PlayerVolume" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">50</Value>
     </Setting>
-    <Setting Name="WavePanelPixelsPerSeconds" Type="System.Double" Scope="User">
+    <Setting Name="WaveShapeViewPixelsPerSeconds" Type="System.Double" Scope="User">
       <Value Profile="(Default)">-1</Value>
     </Setting>
   </Settings>
