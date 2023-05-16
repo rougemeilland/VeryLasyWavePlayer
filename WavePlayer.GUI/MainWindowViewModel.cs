@@ -32,6 +32,8 @@ namespace WavePlayer.GUI
         private double _overViewActualHeight;
         private double _timeStampsViewActualWidth;
         private double _timeStampsViewActualHeight;
+        private double _overViewMarkedTimePixels;
+        private double _overViewPlayingTimePixels;
 
         public Command OpenCommand { get; set; }
         public Command ExitCommand { get; set; }
@@ -379,6 +381,34 @@ namespace WavePlayer.GUI
             }
         }
 
+        public double OverViewMarkedTimePixels
+        {
+            get => _overViewMarkedTimePixels;
+            
+            set
+            {
+                if (value != OverViewMarkedTimePixels)
+                {
+                    _overViewMarkedTimePixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewMarkedTimePixels));
+                }
+            }
+        }
+
+        public double OverViewPlayingTimePixels
+        {
+            get => _overViewPlayingTimePixels;
+            
+            set
+            {
+                if (value != _overViewPlayingTimePixels)
+                {
+                    _overViewPlayingTimePixels = value;
+                    RaisePropertyChangedEvent(nameof(OverViewPlayingTimePixels));
+                }
+            }
+        }
+
         public double TimeStampsViewActualWidth
         {
             get => _timeStampsViewActualWidth;
@@ -496,7 +526,7 @@ namespace WavePlayer.GUI
                     Settings.Default.WaveShapeViewPixelsPerSeconds = normalizedValue;
                     Settings.Default.Save();
                     RaisePropertyChangedEvent(nameof(WaveShapeViewPixelsPerSeconds));
-                    RaisePropertyChangedEvent(nameof(VerticalLineTickness));
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewVerticalLineTickness));
                 }
             }
         }
@@ -511,13 +541,14 @@ namespace WavePlayer.GUI
                 {
                     _waveShapeViewPixelsPerSampleData = value;
                     RaisePropertyChangedEvent(nameof(WaveShapeViewPixelsPerSampleData));
-                    RaisePropertyChangedEvent(nameof(HorizontalLineTickness));
+                    RaisePropertyChangedEvent(nameof(WaveShapeViewHorizontalLineTickness));
                 }
             }
         }
 
-        public double HorizontalLineTickness => 2.0 / WaveShapeViewPixelsPerSampleData;
-        public double VerticalLineTickness => 2.0 / WaveShapeViewPixelsPerSeconds;
+        public double WaveShapeViewHorizontalLineTickness => 2.0 / WaveShapeViewPixelsPerSampleData;
+
+        public double WaveShapeViewVerticalLineTickness => 2.0 / WaveShapeViewPixelsPerSeconds;
 
         public ObservableCollection<WaveShapeViewGridLineViewModel> WaveShapeViewGridLines
         {

@@ -286,6 +286,15 @@
                         <ScaleTransform ScaleX="{Binding Path=OverViewMagnification}" ScaleY="30"/>
                     </Polygon.RenderTransform>
                 </Polygon>
+
+                <!-- 水平中心線 -->
+                <Line Panel.ZIndex="4" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="15" X2="{Binding Path=OverViewWidthPixels}" Y2="15" StrokeThickness="1" Stroke="White"/>
+
+                <!-- 再生位置垂直線 -->
+                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="{Binding Path=OverViewPlayingTimePixels}" Y1="0" X2="{Binding Path=OverViewPlayingTimePixels}" Y2="30" StrokeThickness="1" Stroke="Yellow"/>
+
+                <!-- 現在位置垂直線 -->
+                <Line Panel.ZIndex="6" Canvas.Left="0" Canvas.Top="0" X1="{Binding Path=OverViewMarkedTimePixels}" Y1="0" X2="{Binding Path=OverViewMarkedTimePixels}" Y2="30" StrokeThickness="1" Stroke="Red"/>
             </Canvas>
             
             <!-- タイムスタンプ -->
@@ -343,13 +352,13 @@
                 </ItemsControl>
 
                 <!-- 水平中心線 -->
-                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="0.5" X2="{Binding Path=WaveShapeViewWidthSeconds}" Y2="0.5" StrokeThickness="{Binding Path=HorizontalLineTickness}" Stroke="White"/>
+                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="0.5" X2="{Binding Path=WaveShapeViewWidthSeconds}" Y2="0.5" StrokeThickness="{Binding Path=WaveShapeViewHorizontalLineTickness}" Stroke="White"/>
 
                 <!-- 再生位置垂直線 -->
-                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=PlayingTimeSeconds}" Y1="0" X2="{Binding Path=PlayingTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Yellow"/>
+                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=PlayingTimeSeconds}" Y1="0" X2="{Binding Path=PlayingTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=WaveShapeViewVerticalLineTickness}" Stroke="Yellow"/>
 
                 <!-- 現在位置垂直線 -->
-                <Line Panel.ZIndex="7" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=MarkedTimeSeconds}" Y1="0" X2="{Binding Path=MarkedTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=VerticalLineTickness}" Stroke="Red"/>
+                <Line Panel.ZIndex="7" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=MarkedTimeSeconds}" Y1="0" X2="{Binding Path=MarkedTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=WaveShapeViewVerticalLineTickness}" Stroke="Red"/>
 
             </Canvas>
 

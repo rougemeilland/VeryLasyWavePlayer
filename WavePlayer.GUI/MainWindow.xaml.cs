@@ -380,7 +380,6 @@ namespace WavePlayer.GUI
                                 break;
                         }
                     };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -394,7 +393,6 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -414,7 +412,6 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -434,7 +431,6 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -447,7 +443,34 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.MarkedTimeSeconds):
+                        case nameof(_viewModel.MusicDurationSeconds):
+                        case nameof(_viewModel.OverViewActualWidth):
+                            _viewModel.OverViewMarkedTimePixels = _viewModel.MarkedTimeSeconds / _viewModel.MusicDurationSeconds * _viewModel.OverViewActualWidth;
+                            break;
+                        default:
+                            break;
+                    }
+                };
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.MusicDurationSeconds):
+                        case nameof(_viewModel.PlayingTimeSeconds):
+                        case nameof(_viewModel.OverViewActualWidth):
+                            _viewModel.OverViewPlayingTimePixels = _viewModel.PlayingTimeSeconds / _viewModel.MusicDurationSeconds * _viewModel.OverViewActualWidth;
+                            break;
+                        default:
+                            break;
+                    }
+                };
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -462,7 +485,6 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -470,15 +492,14 @@ namespace WavePlayer.GUI
                     {
                         case nameof(_viewModel.MusicDuration):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                        case nameof(_viewModel.VerticalLineTickness):
+                        case nameof(_viewModel.WaveShapeViewVerticalLineTickness):
                             _viewModel.WaveShapeViewGridLines =
-                                GetGridLines(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, _viewModel.VerticalLineTickness);
+                                GetGridLines(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, _viewModel.WaveShapeViewVerticalLineTickness);
                             break;
                         default:
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -495,7 +516,6 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -511,7 +531,6 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -524,7 +543,6 @@ namespace WavePlayer.GUI
                             break;
                     }
                 };
-
             _viewModel.PropertyChanged +=
                 (s, e) =>
                 {
@@ -533,6 +551,22 @@ namespace WavePlayer.GUI
                         case nameof(_viewModel.WaveShapeViewActualWidth):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
                             _viewModel.WaveShapeViewWidthSeconds = _viewModel.WaveShapeViewActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds;
+                            break;
+                        default:
+                            break;
+                    }
+                };
+            _viewModel.PropertyChanged +=
+                (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(_viewModel.MusicDurationSeconds):
+                        case nameof(_viewModel.WaveShapeViewActualWidth):
+                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
+                            var limit = _viewModel.WaveShapeViewActualWidth / _viewModel.MusicDurationSeconds / 2;
+                            if (_viewModel.WaveShapeViewPixelsPerSeconds < limit)
+                                _viewModel.WaveShapeViewPixelsPerSeconds = limit;
                             break;
                         default:
                             break;
@@ -728,55 +762,82 @@ namespace WavePlayer.GUI
 
         private static (TimeSpan pitch, int interval) GetGridLinePitch(double pixelsPerSeconds)
         {
+            // 細線の間隔は最低でも30ピクセル以上
+
             if (pixelsPerSeconds >= 3000)
             {
-                // 細線は10ミリ秒, 太線は100ミリ秒
-                return (TimeSpan.FromMilliseconds(10), 10);
+                // 細線は10ミリ秒, 太線は50ミリ秒
+                return (TimeSpan.FromMilliseconds(10), 5);
             }
             else if (pixelsPerSeconds >= 1500)
             {
-                // 細線は20ミリ秒, 太線は200ミリ秒
-                return (TimeSpan.FromMilliseconds(20), 10);
+                // 細線は20ミリ秒, 太線は100ミリ秒
+                return (TimeSpan.FromMilliseconds(20), 5);
             }
             else if (pixelsPerSeconds >= 600)
             {
-                // 細線は50ミリ秒, 太線は500ミリ秒
-                return (TimeSpan.FromMilliseconds(50), 10);
+                // 細線は50ミリ秒, 太線は200ミリ秒
+                return (TimeSpan.FromMilliseconds(50), 4);
             }
             else if (pixelsPerSeconds >= 300)
             {
-                // 細線は100ミリ秒, 太線は1秒
-                return (TimeSpan.FromMilliseconds(100), 10);
+                // 細線は100ミリ秒, 太線は500ミリ秒
+                return (TimeSpan.FromMilliseconds(100), 5);
             }
             else if (pixelsPerSeconds >= 150)
             {
-                // 細線は200ミリ秒, 太線は2秒
-                return (TimeSpan.FromMilliseconds(200), 10);
+                // 細線は200ミリ秒, 太線は1秒
+                return (TimeSpan.FromMilliseconds(200), 5);
             }
             else if (pixelsPerSeconds >= 60)
             {
-                // 細線は500ミリ秒, 太線は5秒
-                return (TimeSpan.FromMilliseconds(500), 10);
+                // 細線は500ミリ秒, 太線は2秒
+                return (TimeSpan.FromMilliseconds(500), 4);
             }
             else if (pixelsPerSeconds >= 30)
             {
-                // 細線は1秒, 太線は10秒
-                return (TimeSpan.FromSeconds(1), 10);
+                // 細線は1秒, 太線は5秒
+                return (TimeSpan.FromSeconds(1), 5);
             }
             else if (pixelsPerSeconds >= 15)
             {
-                // 細線は2秒, 太線は20秒
-                return (TimeSpan.FromSeconds(2), 10);
+                // 細線は2秒, 太線は10秒
+                return (TimeSpan.FromSeconds(2), 5);
             }
             else if (pixelsPerSeconds >= 6)
             {
-                // 細線は5秒, 太線は30秒
-                return (TimeSpan.FromSeconds(5), 6);
+                // 細線は5秒, 太線は20秒
+                return (TimeSpan.FromSeconds(5), 4);
+            }
+            else if (pixelsPerSeconds >= 3)
+            {
+                // 細線は10秒, 太線は1分
+                return (TimeSpan.FromSeconds(10), 6);
+            }
+            else if (pixelsPerSeconds >= 1)
+            {
+                // 細線は30秒, 太線は2分
+                return (TimeSpan.FromSeconds(30), 4);
+            }
+            else if (pixelsPerSeconds >= 0.5)
+            {
+                // 細線は1分, 太線は5分
+                return (TimeSpan.FromMinutes(1), 5);
+            }
+            else if (pixelsPerSeconds >= 0.25)
+            {
+                // 細線は2分, 太線は10分
+                return (TimeSpan.FromMinutes(2), 5);
+            }
+            else if (pixelsPerSeconds >= 0.1)
+            {
+                // 細線は5分, 太線は20分
+                return (TimeSpan.FromMinutes(5), 4);
             }
             else
             {
-                // 細線は10秒, 太線は60秒
-                return (TimeSpan.FromSeconds(10), 6);
+                // 細線は10分, 太線は60分
+                return (TimeSpan.FromMinutes(10), 6);
             }
         }
 
