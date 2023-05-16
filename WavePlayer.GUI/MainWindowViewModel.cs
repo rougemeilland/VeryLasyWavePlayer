@@ -40,8 +40,9 @@ namespace WavePlayer.GUI
         public Command OptionCommand { get; set; }
         public Command AboutCommand { get; set; }
         public Command Play10msecAndPauseCommand { get; set; }
-        public Command PlayAndMoveMarkerCommand { get; set; }
+        public Command PlayAndMoveMarkerOrPauseCommand { get; set; }
         public Command PlayFromMarkerCommand { get; set; }
+        public Command PauseCommand { get; set; }
         public Command PositionForward100msecCommand { get; set; }
         public Command PositionBackward100msecCommand { get; set; }
         public Command PositionForward1secCommand { get; set; }

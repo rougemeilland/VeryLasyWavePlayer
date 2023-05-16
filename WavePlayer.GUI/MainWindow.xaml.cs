@@ -177,7 +177,7 @@ namespace WavePlayer.GUI
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                             });
                         }));
-            _viewModel.PlayAndMoveMarkerCommand
+            _viewModel.PlayAndMoveMarkerOrPauseCommand
                 = new Command(
                     p => CanPlayWaveFile(),
                     p =>
@@ -224,6 +224,31 @@ namespace WavePlayer.GUI
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
                                 MusicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Playing;
+                                break;
+                            default:
+                                break;
+                        }
+                    });
+            _viewModel.PauseCommand
+                = new Command(
+                    p => CanPlayWaveFile(),
+                    p =>
+                    {
+                        switch (_viewModel.MusicPlayingStatus)
+                        {
+                            case MusicPlayingStatusType.Ready:
+                            case MusicPlayingStatusType.Paused:
+                            case MusicPlayingStatusType.Playing:
+                                MusicPlayer.Pause();
+                                _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
+                                break;
+                            case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                                MusicPlayer.Pause();
+                                var position = MusicPlayer.Position;
+                                _viewModel.MarkedTime = position;
+                                _viewModel.PlayingTime = position;
+                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             default:
                                 break;
@@ -363,8 +388,9 @@ namespace WavePlayer.GUI
                             case nameof(_viewModel.MusicPlayingStatus):
                                 _viewModel.OpenCommand.RaiseCanExecuteChanged();
                                 _viewModel.Play10msecAndPauseCommand.RaiseCanExecuteChanged();
-                                _viewModel.PlayAndMoveMarkerCommand.RaiseCanExecuteChanged();
+                                _viewModel.PlayAndMoveMarkerOrPauseCommand.RaiseCanExecuteChanged();
                                 _viewModel.PlayFromMarkerCommand.RaiseCanExecuteChanged();
+                                _viewModel.PauseCommand.RaiseCanExecuteChanged();
                                 _viewModel.PositionForward100msecCommand.RaiseCanExecuteChanged();
                                 _viewModel.PositionBackward100msecCommand.RaiseCanExecuteChanged();
                                 _viewModel.PositionForward1secCommand.RaiseCanExecuteChanged();

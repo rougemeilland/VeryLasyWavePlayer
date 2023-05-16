@@ -12,8 +12,9 @@
     <Window.InputBindings>
         <KeyBinding Key="F" Command="{Binding Path=OpenCommand}"/>
         <KeyBinding Key="S" Command="{Binding Path=Play10msecAndPauseCommand}"/>
-        <KeyBinding Key="Space" Command="{Binding Path=PlayAndMoveMarkerCommand}"/>
+        <KeyBinding Key="Space" Command="{Binding Path=PlayAndMoveMarkerOrPauseCommand}"/>
         <KeyBinding Key="Return" Command="{Binding Path=PlayFromMarkerCommand}"/>
+        <KeyBinding Key="Esc" Command="{Binding Path=PauseCommand}"/>
         <KeyBinding Key="Right" Command="{Binding Path=PositionForward100msecCommand}"/>
         <KeyBinding Key="Left" Command="{Binding Path=PositionBackward100msecCommand}"/>
         <KeyBinding Key="Right" Modifiers="Ctrl" Command="{Binding Path=PositionForward1secCommand}"/>
