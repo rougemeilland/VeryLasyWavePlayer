@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Windows.Input;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -11,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using WavePlayer.GUI.Properties;
+using System.Windows.Controls;
 
 namespace WavePlayer.GUI
 {
@@ -590,9 +592,13 @@ namespace WavePlayer.GUI
                         case nameof(_viewModel.MusicDurationSeconds):
                         case nameof(_viewModel.WaveShapeViewActualWidth):
                         case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            var limit = _viewModel.WaveShapeViewActualWidth / _viewModel.MusicDurationSeconds / 2;
-                            if (_viewModel.WaveShapeViewPixelsPerSeconds < limit)
-                                _viewModel.WaveShapeViewPixelsPerSeconds = limit;
+                            if (_viewModel.WaveShapeViewActualWidth > 0 && _viewModel.MusicDurationSeconds > 0)
+                            {
+                                var limit = _viewModel.WaveShapeViewActualWidth / _viewModel.MusicDurationSeconds / 2;
+                                if (_viewModel.WaveShapeViewPixelsPerSeconds < limit)
+                                    _viewModel.WaveShapeViewPixelsPerSeconds = limit;
+                            }
+
                             break;
                         default:
                             break;
@@ -615,8 +621,6 @@ namespace WavePlayer.GUI
 
             _10msecIntervalTimer.Start();
 
-            // TODO: オーバービューをクリックするとその付近にマーカーを移動
-            // TODO: 波形ビューをクリックするとその付近にマーカーを移動
             // TODO: 再生時にスムーズスクロールをする
         }
 
@@ -730,6 +734,17 @@ namespace WavePlayer.GUI
             MusicPlayer.Volume = _viewModel.PlayerVolume / 100.0;
         }
 
+        private void MoveMarkedTimeByUser(TimeSpan time)
+        {
+            if (time < TimeSpan.Zero)
+                time = TimeSpan.Zero;
+            if (time > _viewModel.MusicDuration)
+                time = _viewModel.MusicDuration;
+            _viewModel.MarkedTime = time;
+            _viewModel.PlayingTime = time;
+            MusicPlayer.Position = time;
+        }
+
         private static PointCollection GetWaveShapePollygonPoints(SampleDataCollection sampleData)
         {
             var points = new PointCollection();
@@ -788,7 +803,7 @@ namespace WavePlayer.GUI
 
         private static (TimeSpan pitch, int interval) GetGridLinePitch(double pixelsPerSeconds)
         {
-            // 細線の間隔は最低でも30ピクセル以上
+            // 細線の間隔は最低でも30ピクセル以上にすること (MUST be "pitch * pixelsPerSeconds >= 30")
 
             if (pixelsPerSeconds >= 3000)
             {
@@ -892,6 +907,24 @@ namespace WavePlayer.GUI
                 _viewModel.WaveShapeViewActualWidth = c.ActualWidth;
             if (e.HeightChanged)
                 _viewModel.WaveShapeViewActualHeight = c.ActualHeight;
+        }
+
+        private void OverViewMouseDownEventHandler(object sender, MouseButtonEventArgs e)
+        {
+            var c = (FrameworkElement)sender;
+            if (e.ButtonState == MouseButtonState.Pressed && e.ChangedButton == MouseButton.Left && _viewModel.OverViewMagnification > 0)
+            {
+                MoveMarkedTimeByUser(TimeSpan.FromSeconds(e.GetPosition(c).X / _viewModel.OverViewMagnification));
+            }
+        }
+
+        private void WaveShapeViewMouseDownEventHandler(object sender, MouseButtonEventArgs e)
+        {
+            var c = (FrameworkElement)sender;
+            if (e.ButtonState == MouseButtonState.Pressed && e.ChangedButton == MouseButton.Left && _viewModel.WaveShapeViewActualWidth > 0)
+            {
+                MoveMarkedTimeByUser(TimeSpan.FromSeconds(e.GetPosition(c).X - _viewModel.WaveShapeViewHorizontalOffsetSeconds));
+            }
         }
     }
 }

@@ -274,7 +274,7 @@
             <MediaElement DockPanel.Dock="Bottom" Width="1" Height="1" Visibility="Collapsed" LoadedBehavior="Manual" x:Name="MusicPlayer" x:FieldModifier="private"/>
 
             <!-- オーバービュー -->
-            <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" SizeChanged="OverViewSizeChangedEventHandler">
+            <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" SizeChanged="OverViewSizeChangedEventHandler" MouseDown="OverViewMouseDownEventHandler">
                 <!-- 背景BOX -->
                 <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=OverViewWidthPixels}" Height="30" Fill="#FFA6C0D6"/>
 
@@ -324,7 +324,7 @@
             </ItemsControl>
 
             <!-- 波形グラフ -->
-            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SizeChanged="WaveShapeViewSizeChangedEventHandler">
+            <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SizeChanged="WaveShapeViewSizeChangedEventHandler" MouseDown="WaveShapeViewMouseDownEventHandler">
                 <Canvas.RenderTransform>
                     <ScaleTransform ScaleX="{Binding Path=WaveShapeViewPixelsPerSeconds}" ScaleY="{Binding Path=WaveShapeViewPixelsPerSampleData}"/>
                 </Canvas.RenderTransform>

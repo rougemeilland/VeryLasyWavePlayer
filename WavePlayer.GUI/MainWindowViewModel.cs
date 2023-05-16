@@ -509,7 +509,7 @@ namespace WavePlayer.GUI
             get
             {
                 var value = Settings.Default.WaveShapeViewPixelsPerSeconds;
-                var normalizedValue = NormalizePerSeconsaValue(value);
+                var normalizedValue = NormalizeWindowShapeViewPixelsPerSecondsValue(value);
                 if (normalizedValue != value)
                 {
                     Settings.Default.WaveShapeViewPixelsPerSeconds = normalizedValue;
@@ -521,7 +521,7 @@ namespace WavePlayer.GUI
 
             set
             {
-                var normalizedValue = NormalizePerSeconsaValue(value);
+                var normalizedValue = NormalizeWindowShapeViewPixelsPerSecondsValue(value);
                 if (normalizedValue != Settings.Default.WaveShapeViewPixelsPerSeconds)
                 {
                     Settings.Default.WaveShapeViewPixelsPerSeconds = normalizedValue;
@@ -593,7 +593,7 @@ namespace WavePlayer.GUI
         private static TimeSpan NormalizeTime(TimeSpan value)
             => TimeSpan.FromSeconds(Math.Round(value.TotalSeconds, 2, MidpointRounding.ToEven));
 
-        private static double NormalizePerSeconsaValue(double originalValue)
+        private static double NormalizeWindowShapeViewPixelsPerSecondsValue(double originalValue)
         {
             var normalizedValue = originalValue;
             if (normalizedValue <= 0)
