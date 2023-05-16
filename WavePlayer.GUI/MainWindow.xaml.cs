@@ -1,5 +1,4 @@
-﻿using System.Windows.Input;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -8,11 +7,11 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using WavePlayer.GUI.Properties;
-using System.Windows.Controls;
 
 namespace WavePlayer.GUI
 {
