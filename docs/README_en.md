@@ -1,7 +1,7 @@
 # Very Lasy Wave Player
 
 ## 0. [Language]
-+ <u>**English**</u>
++ **English**
 + [日本語](README.md)
 
 ## 1. [Overview]
