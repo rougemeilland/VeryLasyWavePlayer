@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -24,6 +25,7 @@ namespace WavePlayer.GUI
         : Window
     {
         private const string _developersUrl = "https://github.com/rougemeilland/VeryLazyWavePlayer";
+        private const string _onlineHelpUrl = "https://github.com/rougemeilland/VeryLazyWavePlayer/tree/main#readme";
         private const double _pixelsPerSecondsScaleFactor = 4.0 / 3;
         private static readonly Regex _pastedTimePattern = new Regex(@"^\s*\[?((?<m>\d+):)?(?<s>\d+(\.\d+))?\]?\s*$", RegexOptions.Compiled);
         private readonly MainWindowViewModel _viewModel;
@@ -116,6 +118,9 @@ namespace WavePlayer.GUI
                         if (result == true)
                             _viewModel.CurrentCultureName = dialog.SelectedCulture;
                     });
+            _viewModel.HelpCommand =
+                new Command(
+                    _ => _ = Process.Start(new ProcessStartInfo { FileName = _onlineHelpUrl, UseShellExecute = true }));
             _viewModel.AboutCommand =
                 new Command(
                     _ =>
@@ -161,21 +166,19 @@ namespace WavePlayer.GUI
                 = new Command(
                     p => CanPlayWaveFile(),
                     p =>
+                    {
+                        _musicPlayer.Pause();
+                        var time = _musicPlayer.Position;
+                        if ((_viewModel.AnimationMode & AnimationMode.MoveMarkerPosition) != AnimationMode.None)
+                            _viewModel.MarkedTime = time;
+                        if ((_viewModel.AnimationMode & AnimationMode.MovePlayingPosition) != AnimationMode.None)
+                            _viewModel.PlayingTime = time;
+                        _musicPlayer.Position = _viewModel.MarkedTime;
+                        _viewModel.PlayingTime = _viewModel.MarkedTime;
+                        _musicPlayer.Play();
+                        _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Stepping;
                         _ = Task.Run(async () =>
                         {
-                            Dispatcher.Invoke(() =>
-                            {
-                                _musicPlayer.Pause();
-                                var time = _musicPlayer.Position;
-                                if ((_viewModel.AnimationMode & AnimationMode.MoveMarkerPosition) != AnimationMode.None)
-                                    _viewModel.MarkedTime = time;
-                                if ((_viewModel.AnimationMode & AnimationMode.MovePlayingPosition) != AnimationMode.None)
-                                    _viewModel.PlayingTime = time;
-                                _musicPlayer.Position = _viewModel.MarkedTime;
-                                _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                _musicPlayer.Play();
-                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Stepping;
-                            });
                             await Task.Delay(TimeSpan.FromMilliseconds(10));
                             Dispatcher.Invoke(() =>
                             {
@@ -185,7 +188,8 @@ namespace WavePlayer.GUI
                                 _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                             });
-                        }));
+                        });
+                    });
             _viewModel.PlayAndMoveMarkerOrPauseCommand
                 = new Command(
                     p => CanPlayWaveFile(),

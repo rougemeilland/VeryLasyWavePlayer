@@ -60,6 +60,7 @@
         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding Path=PasteMarkerTextCommand}"/>
         <KeyBinding Key="PageUp" Command="{Binding Path=ExpandTimeLineCommand}"/>
         <KeyBinding Key="PageDown" Command="{Binding Path=ShrinkTimeLineCommand}"/>
+        <KeyBinding Key="F1" Command="{Binding Path=HelpCommand}"/>
         <MouseBinding Gesture="{x:Static local:MouseWheelGesture.CtrlUp}" Command="{Binding Path=ExpandTimeLineCommand}"/>
         <MouseBinding Gesture="{x:Static local:MouseWheelGesture.CtrlDown}" Command="{Binding Path=ShrinkTimeLineCommand}"/>
     </Window.InputBindings>
@@ -72,7 +73,10 @@
             <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_TOOL, Mode=OneWay}">
                 <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_OPTION, Mode=OneWay}" Command="{Binding Path=OptionCommand}"/>
             </MenuItem>
-            <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_ABOUT, Mode=OneWay}" Command="{Binding Path=AboutCommand}"/>
+            <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_HELP, Mode=OneWay}">
+                <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_HELP_HELP, Mode=OneWay}" InputGestureText="F1" Command="{Binding Path=HelpCommand}"/>
+                <MenuItem Header="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MENU_TEXT_ABOUT, Mode=OneWay}" Command="{Binding Path=AboutCommand}"/>
+            </MenuItem>
         </Menu>
         <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="LightGray">
             <Border DockPanel.Dock="Left" BorderBrush="Black" BorderThickness="1" Padding="2">

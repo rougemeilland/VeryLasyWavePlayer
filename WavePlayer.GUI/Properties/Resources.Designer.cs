@@ -169,6 +169,24 @@ namespace WavePlayer.GUI.Properties {
         }
         
         /// <summary>
+        ///   _Help に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MENU_TEXT_HELP {
+            get {
+                return ResourceManager.GetString("MENU_TEXT_HELP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Online _help に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MENU_TEXT_HELP_HELP {
+            get {
+                return ResourceManager.GetString("MENU_TEXT_HELP_HELP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   _Open に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MENU_TEXT_OPEN {

@@ -99,6 +99,7 @@ namespace WavePlayer.GUI
         public Command OpenCommand { get; set; }
         public Command ExitCommand { get; set; }
         public Command OptionCommand { get; set; }
+        public Command HelpCommand { get; set; }
         public Command AboutCommand { get; set; }
         public Command Play10msecAndPauseCommand { get; set; }
         public Command PlayAndMoveMarkerOrPauseCommand { get; set; }

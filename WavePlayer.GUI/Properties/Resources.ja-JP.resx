@@ -153,6 +153,12 @@
   <data name="MENU_TEXT_FILE" xml:space="preserve">
     <value>ファイル(_F)</value>
   </data>
+  <data name="MENU_TEXT_HELP" xml:space="preserve">
+    <value>ヘルプ(_H)</value>
+  </data>
+  <data name="MENU_TEXT_HELP_HELP" xml:space="preserve">
+    <value>オンラインヘルプ(_H)</value>
+  </data>
   <data name="MENU_TEXT_OPEN" xml:space="preserve">
     <value>開く(_O)</value>
   </data>

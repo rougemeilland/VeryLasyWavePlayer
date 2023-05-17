@@ -153,6 +153,12 @@
   <data name="MENU_TEXT_FILE" xml:space="preserve">
     <value>_File</value>
   </data>
+  <data name="MENU_TEXT_HELP" xml:space="preserve">
+    <value>_Help</value>
+  </data>
+  <data name="MENU_TEXT_HELP_HELP" xml:space="preserve">
+    <value>Online _help</value>
+  </data>
   <data name="MENU_TEXT_OPEN" xml:space="preserve">
     <value>_Open</value>
   </data>
