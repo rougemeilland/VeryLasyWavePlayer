@@ -48,13 +48,13 @@ The following shortcut keys are supported.
 #### 5.3.2 Move marker position
 |Key | Action when key is pressed|
 |--|--|
-|The right cursor |Marker advances 100 milliseconds.|
+|Right cursor |Marker advances 100 milliseconds.|
 |`Ctrl`+Right Cursor| Marker advances 1 second.|
 |Up cursor |Marker advances 10 seconds.|
 |`Ctrl`+Up Cursor |Marker advances 60 seconds.|
 |Left cursor |Marker moves back 100 milliseconds.|
 |`Ctrl`+Left Cursor| Moves the marker back one second.|
-|Dwn cursor |Marker moves back 10 seconds.|
+|Down cursor |Marker moves back 10 seconds.|
 |`Ctrl`+Down Cursor| Marker moves back 60 seconds.|
 |`HOME` |Marker returns to its initial position.|
 
@@ -78,7 +78,8 @@ The following shortcut keys are supported.
 
 ### 5.4 Mouse operation
 |Operation |Run-time behavior|
-|Left-click the waveform screen |Moves the marker to the clicked position.
+|--|--|
+|Left-click the waveform screen |Moves the marker to the clicked position.|
 |Left-click the upper timeline display |Marker moves to the clicked position.|
 |`Ctrl`+mouse wheel rotation |Expands/contracts the waveform step by step.|
 
