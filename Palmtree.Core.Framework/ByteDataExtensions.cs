@@ -205,11 +205,11 @@ namespace Palmtree
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long AsInt64Le(this ReadOnlySpan<byte> buffer)
-            => unchecked((int)buffer.AsUint64Le());
+            => unchecked((long)buffer.AsUint64Le());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long AsInt64Be(this ReadOnlySpan<byte> buffer)
-            => unchecked((int)buffer.AsUint64Be());
+            => unchecked((long)buffer.AsUint64Be());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong AsUint64Le(this ReadOnlySpan<byte> buffer)

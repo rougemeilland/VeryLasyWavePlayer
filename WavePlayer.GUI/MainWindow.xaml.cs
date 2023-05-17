@@ -481,13 +481,26 @@ namespace WavePlayer.GUI
                                             try
                                             {
                                                 var waveFileBytes = File.ReadAllBytes(_viewModel.CurrentMusicFilePath);
-                                                _ = Dispatcher.Invoke(() => _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Analyzing);
-                                                var sampleData = SampleDataCollection.Analyze(waveFileBytes);
                                                 Dispatcher.Invoke(() =>
                                                 {
-                                                    _viewModel.MusicDuration = sampleData.Duration;
-                                                    _viewModel.WaveShapePoints = GetWaveShapePollygonPoints(sampleData);
-                                                    _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Ready;
+                                                    _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Analyzing;
+                                                    _ = Task.Run(() =>
+                                                    {
+                                                        try
+                                                        {
+                                                            var sampleData = SampleDataCollection.Analyze(waveFileBytes);
+                                                            Dispatcher.Invoke(() =>
+                                                            {
+                                                                _viewModel.MusicDuration = sampleData.Duration;
+                                                                _viewModel.WaveShapePoints = GetWaveShapePollygonPoints(sampleData);
+                                                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Ready;
+                                                            });
+                                                        }
+                                                        catch (Exception)
+                                                        {
+                                                            _ = Dispatcher.Invoke(() => _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Error);
+                                                        }
+                                                    });
                                                 });
                                             }
                                             catch (Exception)
