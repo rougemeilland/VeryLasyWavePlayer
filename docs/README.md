@@ -1,5 +1,10 @@
 # Very Lasy Wave Player
 
+## 0. [言語]
++ [English](README_en.md)
++ **日本語**
+
+
 ## 1. 【概要】
 WAVE ファイル (.wav) の波形を表示しつつ再生ができる、簡易的なオーディオプレイヤーです。
 
