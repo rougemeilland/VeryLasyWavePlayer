@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
@@ -9,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using WavePlayer.GUI.Properties;
@@ -24,49 +24,24 @@ namespace WavePlayer.GUI
         private const string _developersUrl = "https://github.com/rougemeilland/VeryLazyWavePlayer";
         private const double _pixelsPerSecondsScaleFactor = 4.0 / 3;
         private readonly MainWindowViewModel _viewModel;
-        private readonly DispatcherTimer _10msecIntervalTimer;
-        private DateTime? _timeToHidePopup;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            _viewModel = new MainWindowViewModel
+            _viewModel = new MainWindowViewModel(
+                (key, start) =>
+                {
+                    if (start)
+                        ((Storyboard)Resources[key]).Begin();
+                    else
+                        ((Storyboard)Resources[key]).Stop();
+                })
             {
                 MusicPlayingStatus = MusicPlayingStatusType.None,
                 MarkedTime = TimeSpan.Zero,
                 PlayingTime = TimeSpan.Zero,
             };
-
-            _10msecIntervalTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(10)
-            };
-            _10msecIntervalTimer.Tick +=
-                (s, o) =>
-                {
-                    switch (_viewModel.MusicPlayingStatus)
-                    {
-                        case MusicPlayingStatusType.Playing:
-                            _viewModel.PlayingTime = MusicPlayer.Position;
-                            break;
-                        case MusicPlayingStatusType.PlayingWithMarkerMovement:
-                        case MusicPlayingStatusType.Stepping:
-                            _viewModel.PlayingTime = MusicPlayer.Position;
-                            _viewModel.MarkedTime = MusicPlayer.Position;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    if (_timeToHidePopup.HasValue)
-                    {
-                        var now = DateTime.UtcNow;
-                        if (now > _timeToHidePopup.Value)
-                            _viewModel.CopiedMarkedTime = false;
-                    }
-                };
-            Closing += (s, o) => _10msecIntervalTimer.Stop();
 
             _viewModel.OpenCommand =
                 new Command(
@@ -155,6 +130,27 @@ namespace WavePlayer.GUI
                         dialog.DataContext = viewModel;
                         _ = dialog.ShowDialog();
                     });
+
+            //
+            // 【注意】再生制御イベント/ウィンドウサイズ変更イベントでしなければならないこと
+            // イベント処理において以下の何れかの対処を必ず行うこと。
+            // a) _viewModel.MusicPlayingStatus の値を確認し、a-1 ・ a-2の対処を行うこと。
+            //   a-1) _viewModel.MusicPlayingStatus == MusicPlayingStatusType.Playing の場合
+            //       MusicPlayer.Position の値を _viewModel.PlayingTime に反映させる。
+            //   a-2) _viewModel.MusicPlayingStatus == MusicPlayingStatusType.PlayingWithMarkerMovement の場合
+            //       MusicPlayer.Position の値を _viewModel.PlayingTime と  _viewModel.MarkedTime に反映させる。
+            // b) _viewModel.AnimationMode の値を確認し、b-1 ・ b-2の対処を行うこと。
+            //   b-1) (_viewModel.AnimationMode & AnimationMode.MoveMarkerPosition) != AnimationMode.Node の場合
+            //       MusicPlayer.Position の値を _viewModel.MarkedTime に反映させる。
+            //   b-2) (_viewModel.AnimationMode & AnimationMode.MovePlayingPosition) != AnimationMode.Node の場合
+            //       MusicPlayer.Position の値を _viewModel.PlayingTime に反映させる。
+            //
+            // 【MusicPlayer.Positionの値の取得について】
+            // Pause() を実行しても、即時に停止するわけではないらしい。
+            // 特に画面の再描画を行っている場合などフォアグラウンドの負荷が高い状態で Pause() の直後に Position の値を続けて参照すると
+            // 本来はどれも同じ値になるはずが、微妙に異なる値が取得出来てしまうことがある。
+            // Position の値を続けて複数個所で参照する場合は、なるべく 1 回だけ Position に参照して、得た値を再利用すること。
+            //
             _viewModel.Play10msecAndPauseCommand
                 = new Command(
                     p => CanPlayWaveFile(),
@@ -164,10 +160,15 @@ namespace WavePlayer.GUI
                             Dispatcher.Invoke(() =>
                             {
                                 MusicPlayer.Pause();
+                                var time = MusicPlayer.Position;
+                                if ((_viewModel.AnimationMode & AnimationMode.MoveMarkerPosition) != AnimationMode.None)
+                                    _viewModel.MarkedTime = time;
+                                if ((_viewModel.AnimationMode & AnimationMode.MovePlayingPosition) != AnimationMode.None)
+                                    _viewModel.PlayingTime = time;
                                 MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Stepping;
                                 MusicPlayer.Play();
+                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Stepping;
                             });
                             await Task.Delay(TimeSpan.FromMilliseconds(10));
                             Dispatcher.Invoke(() =>
@@ -175,6 +176,7 @@ namespace WavePlayer.GUI
                                 MusicPlayer.Pause();
                                 _viewModel.MarkedTime += TimeSpan.FromMilliseconds(10);
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                             });
                         }));
@@ -188,23 +190,28 @@ namespace WavePlayer.GUI
                             case MusicPlayingStatusType.Ready:
                             case MusicPlayingStatusType.Paused:
                                 MusicPlayer.Pause();
-                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 MusicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.PlayingWithMarkerMovement;
                                 break;
                             case MusicPlayingStatusType.Playing:
                                 MusicPlayer.Pause();
+                                _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                            {
                                 MusicPlayer.Pause();
-                                var position = MusicPlayer.Position;
-                                _viewModel.MarkedTime = position;
-                                _viewModel.PlayingTime = position;
+                                var currentTime = MusicPlayer.Position;
+                                _viewModel.MarkedTime = currentTime;
+                                _viewModel.PlayingTime = currentTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
+                            }
                             default:
                                 break;
                         }
@@ -218,11 +225,25 @@ namespace WavePlayer.GUI
                         {
                             case MusicPlayingStatusType.Ready:
                             case MusicPlayingStatusType.Paused:
+                                MusicPlayer.Pause();
+                                _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                MusicPlayer.Play();
+                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Playing;
+                                break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                                MusicPlayer.Pause();
+                                _viewModel.MarkedTime = MusicPlayer.Position;
+                                _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                MusicPlayer.Play();
+                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Playing;
+                                break;
                             case MusicPlayingStatusType.Playing:
                                 MusicPlayer.Pause();
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 MusicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Playing;
                                 break;
@@ -239,9 +260,16 @@ namespace WavePlayer.GUI
                         {
                             case MusicPlayingStatusType.Ready:
                             case MusicPlayingStatusType.Paused:
-                            case MusicPlayingStatusType.Playing:
                                 MusicPlayer.Pause();
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
+                                break;
+                            case MusicPlayingStatusType.Playing:
+                                MusicPlayer.Pause();
+                                _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                                _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
@@ -249,6 +277,7 @@ namespace WavePlayer.GUI
                                 var position = MusicPlayer.Position;
                                 _viewModel.MarkedTime = position;
                                 _viewModel.PlayingTime = position;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             default:
@@ -298,15 +327,15 @@ namespace WavePlayer.GUI
                             case MusicPlayingStatusType.Paused:
                                 MusicPlayer.Pause();
                                 _viewModel.MarkedTime = TimeSpan.Zero;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 break;
                             case MusicPlayingStatusType.Playing:
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
                                 MusicPlayer.Pause();
                                 _viewModel.MarkedTime = TimeSpan.Zero;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
                                 MusicPlayer.Play();
                                 break;
                             default:
@@ -336,14 +365,65 @@ namespace WavePlayer.GUI
 
                         _viewModel.CopiedMarkedTime = false;
                         _viewModel.CopiedMarkedTime = true;
-                        _timeToHidePopup = DateTime.UtcNow + TimeSpan.FromSeconds(4);
                     });
             _viewModel.ExpandTimeLineCommand =
                 new Command(
-                    p => _viewModel.WaveShapeViewPixelsPerSeconds *= _pixelsPerSecondsScaleFactor);
+                    p =>
+                    {
+                        switch (_viewModel.MusicPlayingStatus)
+                        {
+                            case MusicPlayingStatusType.Playing:
+                                MusicPlayer.Pause();
+                                _viewModel.PlayingTime = MusicPlayer.Position;
+                                _viewModel.WaveShapeView.PixelsPerSeconds *= _pixelsPerSecondsScaleFactor;
+                                MusicPlayer.Position = _viewModel.PlayingTime;
+                                MusicPlayer.Play();
+                                break;
+                            case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                            {
+                                MusicPlayer.Pause();
+                                var currentTime = MusicPlayer.Position;
+                                _viewModel.MarkedTime = currentTime;
+                                _viewModel.PlayingTime = currentTime;
+                                _viewModel.WaveShapeView.PixelsPerSeconds *= _pixelsPerSecondsScaleFactor;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                MusicPlayer.Play();
+                                break;
+                            }
+                            default:
+                                _viewModel.WaveShapeView.PixelsPerSeconds *= _pixelsPerSecondsScaleFactor;
+                                break;
+                        }
+                    });
             _viewModel.ShrinkTimeLineCommand =
                 new Command(
-                    p => _viewModel.WaveShapeViewPixelsPerSeconds /= _pixelsPerSecondsScaleFactor);
+                    p =>
+                    {
+                        switch (_viewModel.MusicPlayingStatus)
+                        {
+                            case MusicPlayingStatusType.Playing:
+                                MusicPlayer.Pause();
+                                _viewModel.PlayingTime = MusicPlayer.Position;
+                                _viewModel.WaveShapeView.PixelsPerSeconds /= _pixelsPerSecondsScaleFactor;
+                                MusicPlayer.Position = _viewModel.PlayingTime;
+                                MusicPlayer.Play();
+                                break;
+                            case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                            {
+                                MusicPlayer.Pause();
+                                var currentTime = MusicPlayer.Position;
+                                _viewModel.MarkedTime = currentTime;
+                                _viewModel.PlayingTime = currentTime;
+                                _viewModel.WaveShapeView.PixelsPerSeconds /= _pixelsPerSecondsScaleFactor;
+                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                MusicPlayer.Play();
+                                break;
+                            }
+                            default:
+                                _viewModel.WaveShapeView.PixelsPerSeconds /= _pixelsPerSecondsScaleFactor;
+                                break;
+                        }
+                    });
 
             _viewModel.PropertyChanged +=
                     (s, e) =>
@@ -407,205 +487,8 @@ namespace WavePlayer.GUI
                                 break;
                         }
                     };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MusicDurationSeconds):
-                        case nameof(_viewModel.OverViewActualWidth):
-                            _viewModel.OverViewMagnification = _viewModel.OverViewActualWidth / _viewModel.MusicDurationSeconds;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MarkedTimeSeconds):
-                        case nameof(_viewModel.MusicDurationSeconds):
-                        case nameof(_viewModel.OverViewActualWidth):
-                        case nameof(_viewModel.WaveShapeViewActualWidth):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.OverViewMarkedRangeLeftPixels =
-                                (_viewModel.MarkedTimeSeconds - _viewModel.WaveShapeViewActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds)
-                                / _viewModel.MusicDurationSeconds
-                                * _viewModel.OverViewActualWidth;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.WaveShapeViewActualWidth):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                        case nameof(_viewModel.MusicDurationSeconds):
-                        case nameof(_viewModel.OverViewActualWidth):
-                            _viewModel.OverViewMarkedRangeWidthPixels =
-                                _viewModel.WaveShapeViewActualWidth
-                                / _viewModel.WaveShapeViewPixelsPerSeconds
-                                / _viewModel.MusicDurationSeconds
-                                * _viewModel.OverViewActualWidth;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.OverViewActualWidth):
-                            _viewModel.OverViewWidthPixels = _viewModel.OverViewActualWidth;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MarkedTimeSeconds):
-                        case nameof(_viewModel.MusicDurationSeconds):
-                        case nameof(_viewModel.OverViewActualWidth):
-                            _viewModel.OverViewMarkedTimePixels = _viewModel.MarkedTimeSeconds / _viewModel.MusicDurationSeconds * _viewModel.OverViewActualWidth;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MusicDurationSeconds):
-                        case nameof(_viewModel.PlayingTimeSeconds):
-                        case nameof(_viewModel.OverViewActualWidth):
-                            _viewModel.OverViewPlayingTimePixels = _viewModel.PlayingTimeSeconds / _viewModel.MusicDurationSeconds * _viewModel.OverViewActualWidth;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MusicDuration):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.TimeStampsViewElements =
-                                GetTimeStamps(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, time => MainWindowViewModel.FormatTime(time));
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MusicDuration):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                        case nameof(_viewModel.WaveShapeViewVerticalLineTickness):
-                            _viewModel.WaveShapeViewGridLines =
-                                GetGridLines(_viewModel.MusicDuration, _viewModel.WaveShapeViewPixelsPerSeconds, _viewModel.WaveShapeViewVerticalLineTickness);
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MarkedTimeSeconds):
-                        case nameof(_viewModel.TimeStampsViewActualWidth):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.WaveShapeViewHorizontalOffsetPixels =
-                                _viewModel.TimeStampsViewActualWidth / 2
-                                - _viewModel.MarkedTimeSeconds * _viewModel.WaveShapeViewPixelsPerSeconds;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MarkedTimeSeconds):
-                        case nameof(_viewModel.WaveShapeViewActualWidth):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.WaveShapeViewHorizontalOffsetSeconds =
-                                _viewModel.WaveShapeViewActualWidth / 2 / _viewModel.WaveShapeViewPixelsPerSeconds - _viewModel.MarkedTimeSeconds;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.WaveShapeViewActualHeight):
-                            _viewModel.WaveShapeViewPixelsPerSampleData = _viewModel.WaveShapeViewActualHeight;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.WaveShapeViewActualWidth):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            _viewModel.WaveShapeViewWidthSeconds = _viewModel.WaveShapeViewActualWidth / _viewModel.WaveShapeViewPixelsPerSeconds;
-                            break;
-                        default:
-                            break;
-                    }
-                };
-            _viewModel.PropertyChanged +=
-                (s, e) =>
-                {
-                    switch (e.PropertyName)
-                    {
-                        case nameof(_viewModel.MusicDurationSeconds):
-                        case nameof(_viewModel.WaveShapeViewActualWidth):
-                        case nameof(_viewModel.WaveShapeViewPixelsPerSeconds):
-                            if (_viewModel.WaveShapeViewActualWidth > 0 && _viewModel.MusicDurationSeconds > 0)
-                            {
-                                var limit = _viewModel.WaveShapeViewActualWidth / _viewModel.MusicDurationSeconds / 2;
-                                if (_viewModel.WaveShapeViewPixelsPerSeconds < limit)
-                                    _viewModel.WaveShapeViewPixelsPerSeconds = limit;
-                            }
-
-                            break;
-                        default:
-                            break;
-                    }
-                };
 
             DataContext = _viewModel;
-            _timeToHidePopup = null;
 
             RecoverWindowBounds();
 
@@ -618,9 +501,7 @@ namespace WavePlayer.GUI
                             () => _viewModel.CurrentMusicFilePath = args[1]));
             }
 
-            _10msecIntervalTimer.Start();
-
-            // TODO: 再生時にスムーズスクロールをする
+            // TODO: Ctrl+V で "nn:nn.nn" または "[nn:nn.nn]" 形式のテキストをペーストすることにより位置決め
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -695,30 +576,37 @@ namespace WavePlayer.GUI
                 case MusicPlayingStatusType.Ready:
                 case MusicPlayingStatusType.Paused:
                     MusicPlayer.Pause();
-                    AddMarkedTime(value);
-                    MusicPlayer.Position = _viewModel.MarkedTime;
+                    _viewModel.MarkedTime = AddMarkedTime(_viewModel.MarkedTime, value, _viewModel.MusicDuration);
                     _viewModel.PlayingTime = _viewModel.MarkedTime;
+                    MusicPlayer.Position = _viewModel.MarkedTime;
                     break;
                 case MusicPlayingStatusType.Playing:
+                    MusicPlayer.Pause();
+                    _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                    _viewModel.MarkedTime = AddMarkedTime(_viewModel.MarkedTime, value, _viewModel.MusicDuration);
+                    _viewModel.PlayingTime = _viewModel.MarkedTime;
+                    MusicPlayer.Position = _viewModel.MarkedTime;
+                    MusicPlayer.Play();
+                    break;
                 case MusicPlayingStatusType.PlayingWithMarkerMovement:
                     MusicPlayer.Pause();
-                    AddMarkedTime(value);
-                    MusicPlayer.Position = _viewModel.MarkedTime;
+                    _viewModel.MarkedTime = AddMarkedTime(MusicPlayer.Position, value, _viewModel.MusicDuration);
                     _viewModel.PlayingTime = _viewModel.MarkedTime;
+                    MusicPlayer.Position = _viewModel.MarkedTime;
                     MusicPlayer.Play();
                     break;
                 default:
                     break;
             }
 
-            void AddMarkedTime(TimeSpan time)
+            TimeSpan AddMarkedTime(TimeSpan markedTime, TimeSpan time, TimeSpan musicDuration)
             {
-                var newMarkedTime = _viewModel.MarkedTime + time;
+                var newMarkedTime = markedTime + time;
                 if (newMarkedTime < TimeSpan.Zero)
                     newMarkedTime = TimeSpan.Zero;
-                if (newMarkedTime > _viewModel.MusicDuration)
-                    newMarkedTime = _viewModel.MusicDuration;
-                _viewModel.MarkedTime = newMarkedTime;
+                if (newMarkedTime > musicDuration)
+                    newMarkedTime = musicDuration;
+                return newMarkedTime;
             }
         }
 
@@ -739,9 +627,39 @@ namespace WavePlayer.GUI
                 time = TimeSpan.Zero;
             if (time > _viewModel.MusicDuration)
                 time = _viewModel.MusicDuration;
-            _viewModel.MarkedTime = time;
-            _viewModel.PlayingTime = time;
-            MusicPlayer.Position = time;
+            switch (_viewModel.MusicPlayingStatus)
+            {
+                case MusicPlayingStatusType.Ready:
+                case MusicPlayingStatusType.Paused:
+                    MusicPlayer.Pause();
+                    _viewModel.MarkedTime = time;
+                    _viewModel.PlayingTime = time;
+                    MusicPlayer.Position = time;
+                    _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
+                    break;
+                case MusicPlayingStatusType.Playing:
+                    MusicPlayer.Pause();
+                    _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                    _viewModel.MarkedTime = time;
+                    _viewModel.PlayingTime = time;
+                    MusicPlayer.Position = time;
+                    _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
+                    break;
+                case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                {
+                    MusicPlayer.Pause();
+                    var currentTime = MusicPlayer.Position;
+                    _viewModel.MarkedTime = currentTime; // _viewModel.MarkedTime の変更イベントを発生させるために必要なコード
+                    _viewModel.PlayingTime = currentTime; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                    _viewModel.MarkedTime = time;
+                    _viewModel.PlayingTime = time;
+                    MusicPlayer.Position = time;
+                    _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
+                    break;
+                }
+                default:
+                    break;
+            }
         }
 
         private static PointCollection GetWaveShapePollygonPoints(SampleDataCollection sampleData)
@@ -759,170 +677,74 @@ namespace WavePlayer.GUI
             return points;
         }
 
-        private static ObservableCollection<WaveShapeViewGridLineViewModel> GetGridLines(TimeSpan musicDuration, double pixelsPerSeconds, double verticalLineTickness)
+        private void SyncViewModelTimes()
         {
-            var (pitch, interval) = GetGridLinePitch(pixelsPerSeconds);
-            var gridLines = new List<WaveShapeViewGridLineViewModel>();
-            for (var index = 0; ; ++index)
+            switch (_viewModel.MusicPlayingStatus)
             {
-                var timeSeconds = pitch.TotalSeconds * index;
-                if (timeSeconds >= musicDuration.TotalSeconds)
+                case MusicPlayingStatusType.Playing:
+                    MusicPlayer.Pause();
+                    _viewModel.PlayingTime = MusicPlayer.Position;
+                    MusicPlayer.Position = _viewModel.PlayingTime;
                     break;
-                var isBold = index % interval == 0;
-                gridLines.Add(
-                    new WaveShapeViewGridLineViewModel
-                    {
-                        TimeSeconds = timeSeconds,
-                        Thickness = verticalLineTickness * (isBold ? 1.0 : 0.5),
-                    });
-            }
-
-            return new ObservableCollection<WaveShapeViewGridLineViewModel>(gridLines);
-        }
-
-        private static ObservableCollection<TimeStampViewElementViewModel> GetTimeStamps(TimeSpan musicDuration, double pixelsPerSeconds, Func<TimeSpan, string> timeFormatter)
-        {
-            var (pitch, interval) = GetGridLinePitch(pixelsPerSeconds);
-            var timeStamps = new List<TimeStampViewElementViewModel>();
-            for (var index = 0; ; index += interval)
-            {
-                var time = TimeSpan.FromTicks(pitch.Ticks * index);
-                if (time >= musicDuration)
+                case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                {
+                    MusicPlayer.Pause();
+                    var currentTime = MusicPlayer.Position;
+                    _viewModel.MarkedTime = currentTime;
+                    _viewModel.PlayingTime = currentTime;
+                    MusicPlayer.Position = _viewModel.MarkedTime;
                     break;
-                timeStamps.Add(
-                    new TimeStampViewElementViewModel
-                    {
-                        TimeText = timeFormatter(time),
-                        HorizontalPositionPixels = pixelsPerSeconds * time.TotalSeconds,
-                    });
-            }
-
-            return new ObservableCollection<TimeStampViewElementViewModel>(timeStamps);
-        }
-
-        private static (TimeSpan pitch, int interval) GetGridLinePitch(double pixelsPerSeconds)
-        {
-            // 細線の間隔は最低でも30ピクセル以上にすること (MUST be "pitch * pixelsPerSeconds >= 30")
-
-            if (pixelsPerSeconds >= 3000)
-            {
-                // 細線は10ミリ秒, 太線は50ミリ秒
-                return (TimeSpan.FromMilliseconds(10), 5);
-            }
-            else if (pixelsPerSeconds >= 1500)
-            {
-                // 細線は20ミリ秒, 太線は100ミリ秒
-                return (TimeSpan.FromMilliseconds(20), 5);
-            }
-            else if (pixelsPerSeconds >= 600)
-            {
-                // 細線は50ミリ秒, 太線は200ミリ秒
-                return (TimeSpan.FromMilliseconds(50), 4);
-            }
-            else if (pixelsPerSeconds >= 300)
-            {
-                // 細線は100ミリ秒, 太線は500ミリ秒
-                return (TimeSpan.FromMilliseconds(100), 5);
-            }
-            else if (pixelsPerSeconds >= 150)
-            {
-                // 細線は200ミリ秒, 太線は1秒
-                return (TimeSpan.FromMilliseconds(200), 5);
-            }
-            else if (pixelsPerSeconds >= 60)
-            {
-                // 細線は500ミリ秒, 太線は2秒
-                return (TimeSpan.FromMilliseconds(500), 4);
-            }
-            else if (pixelsPerSeconds >= 30)
-            {
-                // 細線は1秒, 太線は5秒
-                return (TimeSpan.FromSeconds(1), 5);
-            }
-            else if (pixelsPerSeconds >= 15)
-            {
-                // 細線は2秒, 太線は10秒
-                return (TimeSpan.FromSeconds(2), 5);
-            }
-            else if (pixelsPerSeconds >= 6)
-            {
-                // 細線は5秒, 太線は20秒
-                return (TimeSpan.FromSeconds(5), 4);
-            }
-            else if (pixelsPerSeconds >= 3)
-            {
-                // 細線は10秒, 太線は1分
-                return (TimeSpan.FromSeconds(10), 6);
-            }
-            else if (pixelsPerSeconds >= 1)
-            {
-                // 細線は30秒, 太線は2分
-                return (TimeSpan.FromSeconds(30), 4);
-            }
-            else if (pixelsPerSeconds >= 0.5)
-            {
-                // 細線は1分, 太線は5分
-                return (TimeSpan.FromMinutes(1), 5);
-            }
-            else if (pixelsPerSeconds >= 0.25)
-            {
-                // 細線は2分, 太線は10分
-                return (TimeSpan.FromMinutes(2), 5);
-            }
-            else if (pixelsPerSeconds >= 0.1)
-            {
-                // 細線は5分, 太線は20分
-                return (TimeSpan.FromMinutes(5), 4);
-            }
-            else
-            {
-                // 細線は10分, 太線は60分
-                return (TimeSpan.FromMinutes(10), 6);
+                }
+                default:
+                    break;
             }
         }
 
-        private void OverViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
+        private void OverviewViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
         {
             var c = (FrameworkElement)sender;
             if (e.WidthChanged)
-                _viewModel.OverViewActualWidth = c.ActualWidth;
+                _viewModel.OverviewView.ActualWidth = c.ActualWidth;
             if (e.HeightChanged)
-                _viewModel.OverViewActualHeight = c.ActualHeight;
+                _viewModel.OverviewView.ActualHeight = c.ActualHeight;
+            SyncViewModelTimes();
         }
 
         private void TimeStampViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
         {
             var c = (FrameworkElement)sender;
             if (e.WidthChanged)
-                _viewModel.TimeStampsViewActualWidth = c.ActualWidth;
+                _viewModel.TimeStampsView.ActualWidth = c.ActualWidth;
             if (e.HeightChanged)
-                _viewModel.TimeStampsViewActualHeight = c.ActualHeight;
+                _viewModel.TimeStampsView.ActualHeight = c.ActualHeight;
+            SyncViewModelTimes();
         }
 
         private void WaveShapeViewSizeChangedEventHandler(object sender, SizeChangedEventArgs e)
         {
             var c = (FrameworkElement)sender;
             if (e.WidthChanged)
-                _viewModel.WaveShapeViewActualWidth = c.ActualWidth;
+                _viewModel.WaveShapeView.ActualWidth = c.ActualWidth;
             if (e.HeightChanged)
-                _viewModel.WaveShapeViewActualHeight = c.ActualHeight;
+                _viewModel.WaveShapeView.ActualHeight = c.ActualHeight;
+            SyncViewModelTimes();
         }
 
-        private void OverViewMouseDownEventHandler(object sender, MouseButtonEventArgs e)
+        private void OverviewViewMouseDownEventHandler(object sender, MouseButtonEventArgs e)
         {
             var c = (FrameworkElement)sender;
-            if (e.ButtonState == MouseButtonState.Pressed && e.ChangedButton == MouseButton.Left && _viewModel.OverViewMagnification > 0)
+            if (e.ButtonState == MouseButtonState.Pressed && e.ChangedButton == MouseButton.Left && _viewModel.OverviewView.HorizontalMagnification > 0)
             {
-                MoveMarkedTimeByUser(TimeSpan.FromSeconds(e.GetPosition(c).X / _viewModel.OverViewMagnification));
+                MoveMarkedTimeByUser(TimeSpan.FromSeconds(e.GetPosition(c).X / _viewModel.OverviewView.HorizontalMagnification));
             }
         }
 
         private void WaveShapeViewMouseDownEventHandler(object sender, MouseButtonEventArgs e)
         {
             var c = (FrameworkElement)sender;
-            if (e.ButtonState == MouseButtonState.Pressed && e.ChangedButton == MouseButton.Left && _viewModel.WaveShapeViewActualWidth > 0)
+            if (e.ButtonState == MouseButtonState.Pressed && e.ChangedButton == MouseButton.Left && _viewModel.WaveShapeView.PixelsPerSeconds > 0)
             {
-                MoveMarkedTimeByUser(TimeSpan.FromSeconds(e.GetPosition(c).X - _viewModel.WaveShapeViewHorizontalOffsetSeconds));
+                MoveMarkedTimeByUser(TimeSpan.FromSeconds((e.GetPosition(c).X - _viewModel.WaveShapeView.HalfOfActualWidth) / _viewModel.WaveShapeView.PixelsPerSeconds) + _viewModel.MarkedTime);
             }
         }
     }

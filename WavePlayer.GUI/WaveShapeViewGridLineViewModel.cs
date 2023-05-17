@@ -3,19 +3,34 @@
     public class WaveShapeViewGridLineViewModel
         : ViewModel
     {
-        private double _timeSeconds;
+        private double _horizontalOffsetPixels;
+        private double _verticalLengthPixels;
         private double _thickness;
 
-        public double TimeSeconds
+        public double HorizontalOffsetPixels
         {
-            get => _timeSeconds;
+            get => _horizontalOffsetPixels;
+
+            set
+            {
+                if (value != _horizontalOffsetPixels)
+                {
+                    _horizontalOffsetPixels = value;
+                    RaisePropertyChangedEvent(nameof(HorizontalOffsetPixels));
+                }
+            }
+        }
+
+        public double VerticalLengthPixels
+        {
+            get => _verticalLengthPixels;
             
             set
             {
-                if (value != _timeSeconds)
+                if (value != _verticalLengthPixels)
                 {
-                    _timeSeconds = value;
-                    RaisePropertyChangedEvent(nameof(TimeSeconds));
+                    _verticalLengthPixels = value;
+                    RaisePropertyChangedEvent(nameof(VerticalLengthPixels));
                 }
             }
         }
@@ -23,7 +38,7 @@
         public double Thickness
         {
             get => _thickness;
-            
+
             set
             {
                 if (value != _thickness)

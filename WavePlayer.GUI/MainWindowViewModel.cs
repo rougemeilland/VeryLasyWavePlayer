@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 using WavePlayer.GUI.Properties;
@@ -16,24 +17,83 @@ namespace WavePlayer.GUI
         private TimeSpan _musicDuration;
         private bool _copiedMarkedTime;
         private PointCollection _waveShapePoints;
-        private double _waveShapeViewPixelsPerSampleData;
-        private double _waveShapeViewHorizontalOffsetSeconds;
-        private double _waveShapeViewWidthSeconds;
-        private ObservableCollection<WaveShapeViewGridLineViewModel> _waveShapeViewGridLines;
-        private double _waveShapeViewHorizontalOffsetPixels;
-        private ObservableCollection<TimeStampViewElementViewModel> _timeStampsViewElements;
-        private double _overViewWidthPixels;
-        private double _overViewMagnification;
-        private double _overViewMarkedRangeLeftPixels;
-        private double _overViewMarkedRangeWidthPixels;
-        private double _waveShapeViewActualWidth;
-        private double _waveShapeViewActualHeight;
-        private double _overViewActualWidth;
-        private double _overViewActualHeight;
-        private double _timeStampsViewActualWidth;
-        private double _timeStampsViewActualHeight;
-        private double _overViewMarkedTimePixels;
-        private double _overViewPlayingTimePixels;
+        private AnimationMode _animationMode;
+        private bool _isVisiblePlayView;
+        private bool isValidMusicPlayingStatus;
+
+        public MainWindowViewModel(Action<string, bool> storyboardPlayer)
+        {
+            OverviewView = new OverviewViewModel(this, storyboardPlayer);
+            TimeStampsView = new TimeStampsViewModel(this, storyboardPlayer);
+            WaveShapeView = new WaveShapeViewModel(this, storyboardPlayer);
+            OverviewView.Initialize();
+            TimeStampsView.Initialize();
+            WaveShapeView.Initialize();
+
+            PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(MusicPlayingStatus):
+                    {
+                        switch (MusicPlayingStatus)
+                        {
+                            case MusicPlayingStatusType.Playing:
+                                AnimationMode = AnimationMode.MovePlayingPosition;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_PLAYING;
+                                IsValidMusicPlayingStatus = true;
+                                IsVisiblePlayView = true;
+                                break;
+                            case MusicPlayingStatusType.Stepping:
+                            case MusicPlayingStatusType.PlayingWithMarkerMovement:
+                                AnimationMode = AnimationMode.MovePlayingPosition | AnimationMode.MoveMarkerPosition;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_PLAYING;
+                                IsValidMusicPlayingStatus = true;
+                                IsVisiblePlayView = true;
+                                break;
+                            case MusicPlayingStatusType.Ready:
+                                AnimationMode = AnimationMode.None;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_READY;
+                                IsValidMusicPlayingStatus = true;
+                                IsVisiblePlayView = true;
+                                break;
+                            case MusicPlayingStatusType.Paused:
+                                AnimationMode = AnimationMode.None;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_PAUSED;
+                                IsValidMusicPlayingStatus = true;
+                                IsVisiblePlayView = true;
+                                break;
+                            case MusicPlayingStatusType.Loading:
+                                AnimationMode = AnimationMode.None;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_LOADING;
+                                IsValidMusicPlayingStatus = true;
+                                IsVisiblePlayView = false;
+                                break;
+                            case MusicPlayingStatusType.Analyzing:
+                                AnimationMode = AnimationMode.None;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_ANALYZING;
+                                IsValidMusicPlayingStatus = true;
+                                IsVisiblePlayView = false;
+                                break;
+                            case MusicPlayingStatusType.Error:
+                                AnimationMode = AnimationMode.None;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_ERROR;
+                                IsValidMusicPlayingStatus = true;
+                                IsVisiblePlayView = false;
+                                break;
+                            default:
+                                AnimationMode = AnimationMode.None;
+                                MusicPlayingStatusText = Resources.STATUS_TEXT_NONE;
+                                IsValidMusicPlayingStatus = false;
+                                IsVisiblePlayView = false;
+                                break;
+                        }
+
+                        break;
+                    }
+                }
+            };
+        }
 
         public Command OpenCommand { get; set; }
         public Command ExitCommand { get; set; }
@@ -115,15 +175,12 @@ namespace WavePlayer.GUI
                 {
                     _musicDuration = value;
                     RaisePropertyChangedEvent(nameof(MusicDuration));
-                    RaisePropertyChangedEvent(nameof(MusicDurationSeconds));
                     RaisePropertyChangedEvent(nameof(MusicDurationText));
                 }
             }
         }
 
-        public double MusicDurationSeconds => _musicDuration.TotalSeconds;
-
-        public string MusicDurationText => FormatTime(_musicDuration);
+        public string MusicDurationText => _musicDuration.FormatTime();
 
         public MusicPlayingStatusType MusicPlayingStatus
         {
@@ -134,44 +191,24 @@ namespace WavePlayer.GUI
                 if (value != _musicPlayingStatus)
                 {
                     _musicPlayingStatus = value;
-
-                    switch (value)
-                    {
-                        case MusicPlayingStatusType.None:
-                            MusicPlayingStatusText = Resources.STATUS_TEXT_NONE;
-                            break;
-                        case MusicPlayingStatusType.Loading:
-                            MusicPlayingStatusText = Resources.STATUS_TEXT_LOADING;
-                            break;
-                        case MusicPlayingStatusType.Analyzing:
-                            MusicPlayingStatusText = Resources.STATUS_TEXT_ANALYZING;
-                            break;
-                        case MusicPlayingStatusType.Ready:
-                            MusicPlayingStatusText = Resources.STATUS_TEXT_READY;
-                            break;
-                        case MusicPlayingStatusType.Playing:
-                        case MusicPlayingStatusType.PlayingWithMarkerMovement:
-                        case MusicPlayingStatusType.Stepping:
-                            MusicPlayingStatusText = Resources.STATUS_TEXT_PLAYING;
-                            break;
-                        case MusicPlayingStatusType.Paused:
-                            MusicPlayingStatusText = Resources.STATUS_TEXT_PAUSED;
-                            break;
-                        case MusicPlayingStatusType.Error:
-                            MusicPlayingStatusText = Resources.STATUS_TEXT_ERROR;
-                            break;
-                        default:
-                            break;
-                    }
-
                     RaisePropertyChangedEvent(nameof(MusicPlayingStatus));
-                    RaisePropertyChangedEvent(nameof(IsValidMusicPlayingStatus));
-                    RaisePropertyChangedEvent(nameof(IsVisiblePlayView));
                 }
             }
         }
 
-        public bool IsValidMusicPlayingStatus => _musicPlayingStatus != MusicPlayingStatusType.None;
+        public bool IsValidMusicPlayingStatus
+        {
+            get => isValidMusicPlayingStatus;
+
+            set
+            {
+                if (value != isValidMusicPlayingStatus)
+                {
+                    isValidMusicPlayingStatus = value;
+                    RaisePropertyChangedEvent(nameof(isValidMusicPlayingStatus));
+                }
+            }
+        }
 
         public string MusicPlayingStatusText
         {
@@ -193,20 +230,17 @@ namespace WavePlayer.GUI
 
             set
             {
-                var normalizedTime = NormalizeTime(value);
+                var normalizedTime = value.Normalize();
                 if (normalizedTime != _markedTime)
                 {
                     _markedTime = normalizedTime;
                     RaisePropertyChangedEvent(nameof(MarkedTime));
-                    RaisePropertyChangedEvent(nameof(MarkedTimeSeconds));
                     RaisePropertyChangedEvent(nameof(MarkedTimeText));
                 }
             }
         }
 
-        public double MarkedTimeSeconds => _markedTime.TotalSeconds;
-
-        public string MarkedTimeText => FormatTime(_markedTime);
+        public string MarkedTimeText => _markedTime.FormatTime();
 
         public TimeSpan PlayingTime
         {
@@ -214,35 +248,28 @@ namespace WavePlayer.GUI
 
             set
             {
-                var normalizedTime = NormalizeTime(value);
+                var normalizedTime = value.Normalize();
                 if (normalizedTime != _playingTime)
                 {
                     _playingTime = normalizedTime;
                     RaisePropertyChangedEvent(nameof(PlayingTime));
-                    RaisePropertyChangedEvent(nameof(PlayingTimeSeconds));
                     RaisePropertyChangedEvent(nameof(PlayingTimeText));
                 }
             }
         }
 
-        public double PlayingTimeSeconds => _playingTime.TotalSeconds;
-
-        public string PlayingTimeText => FormatTime(_playingTime);
+        public string PlayingTimeText => _playingTime.FormatTime();
 
         public bool IsVisiblePlayView
         {
-            get
+            get => _isVisiblePlayView;
+
+            set
             {
-                switch (_musicPlayingStatus)
+                if (value != _isVisiblePlayView)
                 {
-                    case MusicPlayingStatusType.Ready:
-                    case MusicPlayingStatusType.Playing:
-                    case MusicPlayingStatusType.PlayingWithMarkerMovement:
-                    case MusicPlayingStatusType.Paused:
-                    case MusicPlayingStatusType.Stepping:
-                        return true;
-                    default:
-                        return false;
+                    _isVisiblePlayView = value;
+                    RaisePropertyChangedEvent(nameof(IsVisiblePlayView));
                 }
             }
         }
@@ -297,285 +324,6 @@ namespace WavePlayer.GUI
             }
         }
 
-        public double OverViewActualWidth
-        {
-            get => _overViewActualWidth;
-
-            set
-            {
-                if (value != _overViewActualWidth)
-                {
-                    _overViewActualWidth = value;
-                    RaisePropertyChangedEvent(nameof(OverViewActualWidth));
-                }
-            }
-        }
-
-        public double OverViewActualHeight
-        {
-            get => _overViewActualHeight;
-
-            set
-            {
-                if (value != _overViewActualHeight)
-                {
-
-                    _overViewActualHeight = value;
-                    RaisePropertyChangedEvent(nameof(OverViewActualHeight));
-                }
-            }
-        }
-
-        public double OverViewMagnification
-        {
-            get => _overViewMagnification;
-
-            set
-            {
-                if (value != _overViewMagnification)
-                {
-                    _overViewMagnification = value;
-                    RaisePropertyChangedEvent(nameof(OverViewMagnification));
-                }
-            }
-        }
-
-        public double OverViewWidthPixels
-        {
-            get => _overViewWidthPixels;
-
-            set
-            {
-                if (value != _overViewWidthPixels)
-                {
-                    _overViewWidthPixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewWidthPixels));
-                }
-            }
-        }
-
-        public double OverViewMarkedRangeLeftPixels
-        {
-            get => _overViewMarkedRangeLeftPixels;
-
-            set
-            {
-                if (value != _overViewMarkedRangeLeftPixels)
-                {
-                    _overViewMarkedRangeLeftPixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeLeftPixels));
-                }
-            }
-        }
-
-        public double OverViewMarkedRangeWidthPixels
-        {
-            get => _overViewMarkedRangeWidthPixels;
-
-            set
-            {
-                if (value != _overViewMarkedRangeWidthPixels)
-                {
-                    _overViewMarkedRangeWidthPixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewMarkedRangeWidthPixels));
-                }
-            }
-        }
-
-        public double OverViewMarkedTimePixels
-        {
-            get => _overViewMarkedTimePixels;
-            
-            set
-            {
-                if (value != OverViewMarkedTimePixels)
-                {
-                    _overViewMarkedTimePixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewMarkedTimePixels));
-                }
-            }
-        }
-
-        public double OverViewPlayingTimePixels
-        {
-            get => _overViewPlayingTimePixels;
-            
-            set
-            {
-                if (value != _overViewPlayingTimePixels)
-                {
-                    _overViewPlayingTimePixels = value;
-                    RaisePropertyChangedEvent(nameof(OverViewPlayingTimePixels));
-                }
-            }
-        }
-
-        public double TimeStampsViewActualWidth
-        {
-            get => _timeStampsViewActualWidth;
-
-            set
-            {
-                if (value != _timeStampsViewActualWidth)
-                {
-                    _timeStampsViewActualWidth = value;
-                    RaisePropertyChangedEvent(nameof(TimeStampsViewActualWidth));
-                }
-            }
-        }
-
-        public double TimeStampsViewActualHeight
-        {
-            get => _timeStampsViewActualHeight;
-
-            set
-            {
-                if (value != _timeStampsViewActualHeight)
-                {
-                    _timeStampsViewActualHeight = value;
-                    RaisePropertyChangedEvent(nameof(TimeStampsViewActualHeight));
-                }
-            }
-        }
-
-        public ObservableCollection<TimeStampViewElementViewModel> TimeStampsViewElements
-        {
-            get => _timeStampsViewElements;
-
-            set
-            {
-                _timeStampsViewElements = value;
-                RaisePropertyChangedEvent(nameof(TimeStampsViewElements));
-            }
-        }
-
-        public double WaveShapeViewActualWidth
-        {
-            get => _waveShapeViewActualWidth;
-
-            set
-            {
-                if (value != _waveShapeViewActualWidth)
-                {
-                    _waveShapeViewActualWidth = value;
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewActualWidth));
-                }
-            }
-        }
-
-        public double WaveShapeViewActualHeight
-        {
-            get => _waveShapeViewActualHeight;
-
-            set
-            {
-                if (value != _waveShapeViewActualHeight)
-                {
-                    _waveShapeViewActualHeight = value;
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewActualHeight));
-                }
-            }
-        }
-
-        public double WaveShapeViewHorizontalOffsetSeconds
-        {
-            get => _waveShapeViewHorizontalOffsetSeconds;
-
-            set
-            {
-                if (value != _waveShapeViewHorizontalOffsetSeconds)
-                {
-                    _waveShapeViewHorizontalOffsetSeconds = value;
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewHorizontalOffsetSeconds));
-                }
-            }
-        }
-
-        public double WaveShapeViewWidthSeconds
-        {
-            get => _waveShapeViewWidthSeconds;
-
-            set
-            {
-                if (_waveShapeViewWidthSeconds != value)
-                {
-                    _waveShapeViewWidthSeconds = value;
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewWidthSeconds));
-                }
-            }
-        }
-        public double WaveShapeViewPixelsPerSeconds
-        {
-            get
-            {
-                var value = Settings.Default.WaveShapeViewPixelsPerSeconds;
-                var normalizedValue = NormalizeWindowShapeViewPixelsPerSecondsValue(value);
-                if (normalizedValue != value)
-                {
-                    Settings.Default.WaveShapeViewPixelsPerSeconds = normalizedValue;
-                    Settings.Default.Save();
-                }
-
-                return normalizedValue;
-            }
-
-            set
-            {
-                var normalizedValue = NormalizeWindowShapeViewPixelsPerSecondsValue(value);
-                if (normalizedValue != Settings.Default.WaveShapeViewPixelsPerSeconds)
-                {
-                    Settings.Default.WaveShapeViewPixelsPerSeconds = normalizedValue;
-                    Settings.Default.Save();
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewPixelsPerSeconds));
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewVerticalLineTickness));
-                }
-            }
-        }
-
-        public double WaveShapeViewPixelsPerSampleData
-        {
-            get => _waveShapeViewPixelsPerSampleData;
-
-            set
-            {
-                if (value != _waveShapeViewPixelsPerSampleData)
-                {
-                    _waveShapeViewPixelsPerSampleData = value;
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewPixelsPerSampleData));
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewHorizontalLineTickness));
-                }
-            }
-        }
-
-        public double WaveShapeViewHorizontalLineTickness => 2.0 / WaveShapeViewPixelsPerSampleData;
-
-        public double WaveShapeViewVerticalLineTickness => 2.0 / WaveShapeViewPixelsPerSeconds;
-
-        public ObservableCollection<WaveShapeViewGridLineViewModel> WaveShapeViewGridLines
-        {
-            get => _waveShapeViewGridLines;
-
-            set
-            {
-                _waveShapeViewGridLines = value;
-                RaisePropertyChangedEvent(nameof(WaveShapeViewGridLines));
-            }
-        }
-
-        public double WaveShapeViewHorizontalOffsetPixels
-        {
-            get => _waveShapeViewHorizontalOffsetPixels;
-
-            set
-            {
-                if (value != _waveShapeViewHorizontalOffsetPixels)
-                {
-                    _waveShapeViewHorizontalOffsetPixels = value;
-                    RaisePropertyChangedEvent(nameof(WaveShapeViewHorizontalOffsetPixels));
-                }
-            }
-        }
-
         public PointCollection WaveShapePoints
         {
             get => _waveShapePoints;
@@ -587,20 +335,145 @@ namespace WavePlayer.GUI
             }
         }
 
-        public static string FormatTime(TimeSpan time)
-            => $"{(int)Math.Floor(time.TotalMinutes):D2}:{time.Seconds:D2}.{(int)Math.Round(time.Milliseconds / 10.0, 0, MidpointRounding.ToEven):D2}";
+        public OverviewViewModel OverviewView { get; }
+        public TimeStampsViewModel TimeStampsView { get; }
+        public WaveShapeViewModel WaveShapeView { get; }
 
-        private static TimeSpan NormalizeTime(TimeSpan value)
-            => TimeSpan.FromSeconds(Math.Round(value.TotalSeconds, 2, MidpointRounding.ToEven));
-
-        private static double NormalizeWindowShapeViewPixelsPerSecondsValue(double originalValue)
+        internal AnimationMode AnimationMode
         {
-            var normalizedValue = originalValue;
-            if (normalizedValue <= 0)
-                normalizedValue = 125;
-            if (normalizedValue > 1000)
-                normalizedValue = 1000;
-            return normalizedValue;
+            get => _animationMode;
+
+            set
+            {
+                if (value != _animationMode)
+                {
+                    _animationMode = value;
+                    RaisePropertyChangedEvent(nameof(AnimationMode));
+                }
+            }
+        }
+
+        internal static ObservableCollection<WaveShapeViewGridLineViewModel> GetGridLines(TimeSpan musicDuration, double pixelsPerSeconds, double actualHeight)
+        {
+            var (pitch, interval) = GetGridLinePitch(pixelsPerSeconds);
+            var gridLines = new List<WaveShapeViewGridLineViewModel>();
+            for (var index = 0; ; ++index)
+            {
+                var timeSeconds = pitch.TotalSeconds * index;
+                if (timeSeconds >= musicDuration.TotalSeconds)
+                    break;
+                var isBold = index % interval == 0;
+                gridLines.Add(
+                    new WaveShapeViewGridLineViewModel
+                    {
+                        HorizontalOffsetPixels = timeSeconds * pixelsPerSeconds,
+                        VerticalLengthPixels = actualHeight,
+                        Thickness = isBold ? 2.0 : 1.0,
+                    });
+            }
+
+            return new ObservableCollection<WaveShapeViewGridLineViewModel>(gridLines);
+        }
+
+        internal static ObservableCollection<TimeStampViewElementViewModel> GetTimeStamps(TimeSpan musicDuration, double pixelsPerSeconds)
+        {
+            var (pitch, interval) = GetGridLinePitch(pixelsPerSeconds);
+            var timeStamps = new List<TimeStampViewElementViewModel>();
+            for (var index = 0; ; index += interval)
+            {
+                var time = TimeSpan.FromTicks(pitch.Ticks * index);
+                if (time >= musicDuration)
+                    break;
+                timeStamps.Add(
+                    new TimeStampViewElementViewModel
+                    {
+                        TimeText = time.FormatTime(),
+                        HorizontalPositionPixels = pixelsPerSeconds * time.TotalSeconds,
+                    });
+            }
+
+            return new ObservableCollection<TimeStampViewElementViewModel>(timeStamps);
+        }
+
+        private static (TimeSpan pitch, int interval) GetGridLinePitch(double pixelsPerSeconds)
+        {
+            // 細線の間隔は最低でも30ピクセル以上にすること (MUST be "pitch * pixelsPerSeconds >= 30")
+
+            if (pixelsPerSeconds >= 3000)
+            {
+                // 細線は10ミリ秒, 太線は50ミリ秒
+                return (TimeSpan.FromMilliseconds(10), 5);
+            }
+            else if (pixelsPerSeconds >= 1500)
+            {
+                // 細線は20ミリ秒, 太線は100ミリ秒
+                return (TimeSpan.FromMilliseconds(20), 5);
+            }
+            else if (pixelsPerSeconds >= 600)
+            {
+                // 細線は50ミリ秒, 太線は200ミリ秒
+                return (TimeSpan.FromMilliseconds(50), 4);
+            }
+            else if (pixelsPerSeconds >= 300)
+            {
+                // 細線は100ミリ秒, 太線は500ミリ秒
+                return (TimeSpan.FromMilliseconds(100), 5);
+            }
+            else if (pixelsPerSeconds >= 150)
+            {
+                // 細線は200ミリ秒, 太線は1秒
+                return (TimeSpan.FromMilliseconds(200), 5);
+            }
+            else if (pixelsPerSeconds >= 60)
+            {
+                // 細線は500ミリ秒, 太線は2秒
+                return (TimeSpan.FromMilliseconds(500), 4);
+            }
+            else if (pixelsPerSeconds >= 30)
+            {
+                // 細線は1秒, 太線は5秒
+                return (TimeSpan.FromSeconds(1), 5);
+            }
+            else if (pixelsPerSeconds >= 15)
+            {
+                // 細線は2秒, 太線は10秒
+                return (TimeSpan.FromSeconds(2), 5);
+            }
+            else if (pixelsPerSeconds >= 6)
+            {
+                // 細線は5秒, 太線は20秒
+                return (TimeSpan.FromSeconds(5), 4);
+            }
+            else if (pixelsPerSeconds >= 3)
+            {
+                // 細線は10秒, 太線は1分
+                return (TimeSpan.FromSeconds(10), 6);
+            }
+            else if (pixelsPerSeconds >= 1)
+            {
+                // 細線は30秒, 太線は2分
+                return (TimeSpan.FromSeconds(30), 4);
+            }
+            else if (pixelsPerSeconds >= 0.5)
+            {
+                // 細線は1分, 太線は5分
+                return (TimeSpan.FromMinutes(1), 5);
+            }
+            else if (pixelsPerSeconds >= 0.25)
+            {
+                // 細線は2分, 太線は10分
+                return (TimeSpan.FromMinutes(2), 5);
+            }
+            else if (pixelsPerSeconds >= 0.1)
+            {
+                // 細線は5分, 太線は20分
+                return (TimeSpan.FromMinutes(5), 4);
+            }
+            else
+            {
+                // 細線は10分, 太線は60分
+                return (TimeSpan.FromMinutes(10), 6);
+            }
         }
     }
 }

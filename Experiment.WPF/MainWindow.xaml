@@ -5,7 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Experiment.WPF"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1000" Height="500">
-    <Grid>
-    </Grid>
+        Title="MainWindow">
+    <Window.Resources>
+        <Storyboard x:Key="MoveRectangle1">
+            <DoubleAnimation Storyboard.TargetName="TestRectangle1" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=From1}" To="{Binding Path=To1}" Duration="{Binding Path=Duration1}"/>
+        </Storyboard>
+        <Storyboard x:Key="MoveRectangle2">
+            <DoubleAnimation Storyboard.TargetName="TestRectangle2" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=From2}" To="{Binding Path=To2}" Duration="{Binding Path=Duration2}"/>
+        </Storyboard>
+    </Window.Resources>
+    <DockPanel>
+        <Canvas DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="500"  ClipToBounds="True">
+            <Rectangle Canvas.Left="200" Canvas.Top="0" Width="500" Height="200" Fill="Aquamarine" x:Name="TestRectangle1" x:FieldModifier="private"/>
+            <Rectangle Canvas.Left="200" Canvas.Top="300" Width="500" Height="200" Fill="Aquamarine" x:Name="TestRectangle2" x:FieldModifier="private"/>
+        </Canvas>
+        <Button HorizontalAlignment="Center" Content="開始" Width="50" Height="20" Click="Button_Click"/>
+    </DockPanel>
 </Window>

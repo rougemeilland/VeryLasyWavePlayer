@@ -9,6 +9,36 @@
         mc:Ignorable="d"
         Title="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.WINDOW_TITLE_MAIN, Mode=OneWay}"
         Height="300">
+    <Window.Resources>
+        <Storyboard x:Key="OverviewViewPlayAreaRectangleStoryboard">
+            <DoubleAnimation Storyboard.TargetName="OverviewViewPlayAreaRectangle" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=OverviewView.MarkedRangeLeftPixels.From}" To="{Binding Path=OverviewView.MarkedRangeLeftPixels.To}" Duration="{Binding Path=OverviewView.MarkedRangeLeftPixels.Duration}"/>
+        </Storyboard>
+        <Storyboard x:Key="OverviewViewPlayingTimePositionLineStoryboard">
+            <DoubleAnimation Storyboard.TargetName="OverviewViewPlayingTimePositionLine" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=OverviewView.PlayingTimePixels.From}" To="{Binding Path=OverviewView.PlayingTimePixels.To}" Duration="{Binding Path=OverviewView.PlayingTimePixels.Duration}"/>
+        </Storyboard>
+        <Storyboard x:Key="OverviewViewMarkedTimePositionLineStoryboard">
+            <DoubleAnimation Storyboard.TargetName="OverviewViewMarkedTimePositionLine" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=OverviewView.MarkedTimePixels.From}" To="{Binding Path=OverviewView.MarkedTimePixels.To}" Duration="{Binding Path=OverviewView.MarkedTimePixels.Duration}"/>
+        </Storyboard>
+        <Storyboard x:Key="TimeStampsViewItemsStoryboard">
+            <DoubleAnimation Storyboard.TargetName="TimeStampsViewItems" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=TimeStampsView.HorizontalOffsetPixels.From}" To="{Binding Path=TimeStampsView.HorizontalOffsetPixels.To}" Duration="{Binding Path=TimeStampsView.HorizontalOffsetPixels.Duration}"/>
+        </Storyboard>
+
+        <Storyboard x:Key="WaveShapeViewPlayAreaRectangleStoryboard">
+            <DoubleAnimation Storyboard.TargetName="WaveShapeViewPlayAreaRectangle" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=WaveShapeView.HorizontalOffsetPixels.From}" To="{Binding Path=WaveShapeView.HorizontalOffsetPixels.To}" Duration="{Binding Path=WaveShapeView.HorizontalOffsetPixels.Duration}"/>
+        </Storyboard>
+
+        <Storyboard x:Key="WaveShapeViewWaveShapeAreaPolygonStoryboard">
+            <DoubleAnimation Storyboard.TargetName="WaveShapeViewWaveShapeAreaPolygon" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=WaveShapeView.HorizontalOffsetPixels.From}" To="{Binding Path=WaveShapeView.HorizontalOffsetPixels.To}" Duration="{Binding Path=WaveShapeView.HorizontalOffsetPixels.Duration}"/>
+        </Storyboard>
+
+        <Storyboard x:Key="WaveShapeViewTimeGridItemsStoryboard">
+            <DoubleAnimation Storyboard.TargetName="WaveShapeViewTimeGridItems" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=WaveShapeView.HorizontalOffsetPixels.From}" To="{Binding Path=WaveShapeView.HorizontalOffsetPixels.To}" Duration="{Binding Path=WaveShapeView.HorizontalOffsetPixels.Duration}"/>
+        </Storyboard>
+
+        <Storyboard x:Key="WaveShapeViewPlayingTimePositionLineStoryboard">
+            <DoubleAnimation Storyboard.TargetName="WaveShapeViewPlayingTimePositionLine" Storyboard.TargetProperty="(Canvas.Left)" From="{Binding Path=WaveShapeView.PlayingTimeOffsetPixels.From}" To="{Binding Path=WaveShapeView.PlayingTimeOffsetPixels.To}" Duration="{Binding Path=WaveShapeView.PlayingTimeOffsetPixels.Duration}"/>
+        </Storyboard>
+    </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Key="F" Command="{Binding Path=OpenCommand}"/>
         <KeyBinding Key="S" Command="{Binding Path=Play10msecAndPauseCommand}"/>
@@ -258,12 +288,30 @@
                         </Style>
                     </Border.Style>
                     <StackPanel Orientation="Vertical">
-                        <Popup IsOpen="{Binding Path=CopiedMarkedTime}" StaysOpen="True" PlacementTarget="{Binding ElementName=MarkedTimeTextBlock}" VerticalOffset="6" AllowsTransparency="True">
+                        <Popup IsOpen="False" StaysOpen="True" PlacementTarget="{Binding ElementName=MarkedTimeTextBlock}" VerticalOffset="6" AllowsTransparency="True">
+                            <Popup.Style>
+                                <Style TargetType="Popup">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=CopiedMarkedTime}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <BooleanAnimationUsingKeyFrames Storyboard.TargetProperty="IsOpen" FillBehavior="HoldEnd">
+                                                            <DiscreteBooleanKeyFrame Value="True" KeyTime="0:0:0" />
+                                                            <DiscreteBooleanKeyFrame Value="False" KeyTime="0:0:4" />
+                                                        </BooleanAnimationUsingKeyFrames>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Popup.Style>
                             <Border BorderBrush="#777777" Background="White" BorderThickness="1" CornerRadius="5">
                                 <TextBlock Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MESSAGE_TEXT_COPIED_TO_CLIPBOARD, Mode=OneWay}" Foreground="#333333" Margin="5"/>
                             </Border>
                         </Popup>
-                        <TextBlock x:Name="MarkedTimeTextBlock" VerticalAlignment="Center" Text="{Binding Path=MarkedTimeText}" Margin="3"/>
+                        <TextBlock VerticalAlignment="Center" Text="{Binding Path=MarkedTimeText}" Margin="3" x:Name="MarkedTimeTextBlock" x:FieldModifier="private"/>
                     </StackPanel>
                 </Border>
                 <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_PLAYING_POSITION, Mode=OneWay}" Margin="10 3 3 3"/>
@@ -274,92 +322,92 @@
             <MediaElement DockPanel.Dock="Bottom" Width="1" Height="1" Visibility="Collapsed" LoadedBehavior="Manual" x:Name="MusicPlayer" x:FieldModifier="private"/>
 
             <!-- オーバービュー -->
-            <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" SizeChanged="OverViewSizeChangedEventHandler" MouseDown="OverViewMouseDownEventHandler">
+            <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" SizeChanged="OverviewViewSizeChangedEventHandler" MouseDown="OverviewViewMouseDownEventHandler">
                 <!-- 背景BOX -->
-                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=OverViewWidthPixels}" Height="30" Fill="#FFA6C0D6"/>
+                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=OverviewView.ActualWidth}" Height="30" Fill="#FFA6C0D6"/>
 
                 <!-- 再生可能域 BOX -->
-                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=OverViewMarkedRangeLeftPixels}" Canvas.Top="0" Width="{Binding Path=OverViewMarkedRangeWidthPixels}" Height="30" Fill="Aqua"/>
+                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=OverviewView.MarkedRangeLeftPixels.From}" Canvas.Top="0" Width="{Binding Path=OverviewView.MarkedRangeWidthPixels}" Height="30" Fill="Aqua" x:Name="OverviewViewPlayAreaRectangle" x:FieldModifier="private"/>
 
                 <!-- 波形ポリゴン -->
                 <Polygon Panel.ZIndex="3" Canvas.Left="0" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WaveShapePoints}">
                     <Polygon.RenderTransform>
-                        <ScaleTransform ScaleX="{Binding Path=OverViewMagnification}" ScaleY="30"/>
+                        <ScaleTransform ScaleX="{Binding Path=OverviewView.HorizontalMagnification}" ScaleY="30"/>
                     </Polygon.RenderTransform>
                 </Polygon>
 
                 <!-- 水平中心線 -->
-                <Line Panel.ZIndex="4" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="15" X2="{Binding Path=OverViewWidthPixels}" Y2="15" StrokeThickness="1" Stroke="White"/>
+                <Line Panel.ZIndex="4" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="15" X2="{Binding Path=OverviewView.ActualWidth}" Y2="15" StrokeThickness="1" Stroke="White"/>
 
                 <!-- 再生位置垂直線 -->
-                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="{Binding Path=OverViewPlayingTimePixels}" Y1="0" X2="{Binding Path=OverViewPlayingTimePixels}" Y2="30" StrokeThickness="1" Stroke="Yellow"/>
+                <Line Panel.ZIndex="5" Canvas.Left="{Binding Path=OverviewView.PlayingTimePixels.From}" Canvas.Top="0" X1="0" Y1="0" X2="0" Y2="30" StrokeThickness="1" Stroke="Yellow" x:Name="OverviewViewPlayingTimePositionLine" x:FieldModifier="private"/>
 
                 <!-- 現在位置垂直線 -->
-                <Line Panel.ZIndex="6" Canvas.Left="0" Canvas.Top="0" X1="{Binding Path=OverViewMarkedTimePixels}" Y1="0" X2="{Binding Path=OverViewMarkedTimePixels}" Y2="30" StrokeThickness="1" Stroke="Red"/>
+                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=OverviewView.MarkedTimePixels.From}" Canvas.Top="0" X1="0" Y1="0" X2="0" Y2="30" StrokeThickness="1" Stroke="Red" x:Name="OverviewViewMarkedTimePositionLine" x:FieldModifier="private"/>
             </Canvas>
             
             <!-- タイムスタンプ -->
-            <ItemsControl DockPanel.Dock="Top" HorizontalAlignment="Stretch" Height="23" ItemsSource="{Binding Path=TimeStampsViewElements}" SizeChanged="TimeStampViewSizeChangedEventHandler">
-                <ItemsControl.RenderTransform>
-                    <TranslateTransform X="{Binding Path=WaveShapeViewHorizontalOffsetPixels}" Y="0"/>
-                </ItemsControl.RenderTransform>
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <Canvas HorizontalAlignment="Stretch" Height="23"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemContainerStyle>
-                    <Style>
-                        <Setter Property="Canvas.Left" Value="{Binding Path=HorizontalPositionPixels}" />
-                        <Setter Property="Canvas.Top" Value="0" />
-                    </Style>
-                </ItemsControl.ItemContainerStyle>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Canvas Width="80" Height="23">
-                            <TextBlock Canvas.Left="-40" Text="{Binding Path=TimeText}" Height="23" Width="80" TextAlignment="Center" FontSize="20" FontFamily="Courier" Foreground="#555555"/>
-                        </Canvas>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <Canvas DockPanel.Dock="Top" Height="23" SizeChanged="TimeStampViewSizeChangedEventHandler" ClipToBounds="True">
+                <ItemsControl Canvas.Left="{Binding Path=TimeStampsView.HorizontalOffsetPixels.From}" Canvas.Top="0" HorizontalAlignment="Stretch" Height="23" ItemsSource="{Binding Path=TimeStampsView.Elements}" x:Name="TimeStampsViewItems" x:FieldModifier="private">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas HorizontalAlignment="Stretch" Height="23"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style>
+                            <Setter Property="Canvas.Left" Value="{Binding Path=HorizontalPositionPixels}" />
+                            <Setter Property="Canvas.Top" Value="0" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Canvas Width="80" Height="23">
+                                <TextBlock Canvas.Left="-40" Text="{Binding Path=TimeText}" Height="23" Width="80" TextAlignment="Center" FontSize="20" FontFamily="Courier" Foreground="#555555"/>
+                            </Canvas>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Canvas>
 
             <!-- 波形グラフ -->
             <Canvas ClipToBounds="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SizeChanged="WaveShapeViewSizeChangedEventHandler" MouseDown="WaveShapeViewMouseDownEventHandler">
-                <Canvas.RenderTransform>
-                    <ScaleTransform ScaleX="{Binding Path=WaveShapeViewPixelsPerSeconds}" ScaleY="{Binding Path=WaveShapeViewPixelsPerSampleData}"/>
-                </Canvas.RenderTransform>
 
                 <!-- 背景BOX -->
-                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=WaveShapeViewWidthSeconds}" Height="1" Fill="#FFA6C0D6"/>
+                <Rectangle Panel.ZIndex="1" Canvas.Left="0" Canvas.Top="0" Width="{Binding Path=WaveShapeView.ActualWidth}" Height="{Binding Path=WaveShapeView.ActualHeight}" Fill="#FFA6C0D6"/>
 
                 <!-- 再生可能域 BOX -->
-                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" Width="{Binding Path=MusicDurationSeconds}" Height="1" Fill="Aqua"/>
+                <Rectangle Panel.ZIndex="2" Canvas.Left="{Binding Path=WaveShapeView.HorizontalOffsetPixels.From}" Canvas.Top="0" Width="{Binding Path=WaveShapeView.MusicDurationPixels}" Height="{Binding Path=WaveShapeView.ActualHeight}" Fill="Aqua" x:Name="WaveShapeViewPlayAreaRectangle" x:FieldModifier="private"/>
 
                 <!-- 波形ポリゴン -->
-                <Polygon Panel.ZIndex="3" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WaveShapePoints}"/>
+                <Polygon Panel.ZIndex="3" Canvas.Left="{Binding Path=WaveShapeView.HorizontalOffsetPixels.From}" Canvas.Top="0" Fill="DarkBlue" Points="{Binding Path=WaveShapePoints}" x:Name="WaveShapeViewWaveShapeAreaPolygon" x:FieldModifier="private">
+                    <Polygon.RenderTransform>
+                        <ScaleTransform ScaleX="{Binding Path=WaveShapeView.PixelsPerSeconds}" ScaleY="{Binding Path=WaveShapeView.ActualHeight}"/>
+                    </Polygon.RenderTransform>
+                </Polygon>
 
                 <!-- 時間グリッド -->
-                <ItemsControl Panel.ZIndex="4" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" ItemsSource="{Binding Path=WaveShapeViewGridLines}">
+                <ItemsControl Panel.ZIndex="4" Canvas.Left="{Binding Path=WaveShapeView.HorizontalOffsetPixels.From}" Canvas.Top="0" ItemsSource="{Binding Path=WaveShapeView.GridLines}" x:Name="WaveShapeViewTimeGridItems" x:FieldModifier="private">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <Canvas Width="{Binding Path=MusicDurationSeconds}" Height="1"/>
+                            <Canvas Height="{Binding Path=WaveShapeView.ActualHeight}"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Line X1="{Binding Path=TimeSeconds}" Y1="0" X2="{Binding Path=TimeSeconds}" Y2="1" Stroke="#FF7798AD" StrokeThickness="{Binding Path=Thickness}"/>
+                            <Line X1="{Binding Path=HorizontalOffsetPixels}" Y1="0" X2="{Binding Path=HorizontalOffsetPixels}" Y2="{Binding Path=VerticalLengthPixels}" Stroke="#FF7798AD" StrokeThickness="{Binding Path=Thickness}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
                 <!-- 水平中心線 -->
-                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="0.5" X2="{Binding Path=WaveShapeViewWidthSeconds}" Y2="0.5" StrokeThickness="{Binding Path=WaveShapeViewHorizontalLineTickness}" Stroke="White"/>
+                <Line Panel.ZIndex="5" Canvas.Left="0" Canvas.Top="0" X1="0" Y1="{Binding Path=WaveShapeView.HalfOfActualHeight}" X2="{Binding Path=WaveShapeView.ActualWidth}" Y2="{Binding Path=WaveShapeView.HalfOfActualHeight}" StrokeThickness="2" Stroke="White"/>
 
                 <!-- 再生位置垂直線 -->
-                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=PlayingTimeSeconds}" Y1="0" X2="{Binding Path=PlayingTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=WaveShapeViewVerticalLineTickness}" Stroke="Yellow"/>
+                <Line Panel.ZIndex="6" Canvas.Left="{Binding Path=WaveShapeView.PlayingTimeOffsetPixels.From}" Canvas.Top="0" X1="0" Y1="0" X2="0" Y2="{Binding Path=WaveShapeView.ActualHeight}" StrokeThickness="2" Stroke="Yellow" x:Name="WaveShapeViewPlayingTimePositionLine" x:FieldModifier="private"/>
 
                 <!-- 現在位置垂直線 -->
-                <Line Panel.ZIndex="7" Canvas.Left="{Binding Path=WaveShapeViewHorizontalOffsetSeconds}" Canvas.Top="0" X1="{Binding Path=MarkedTimeSeconds}" Y1="0" X2="{Binding Path=MarkedTimeSeconds}" Y2="1" StrokeThickness="{Binding Path=WaveShapeViewVerticalLineTickness}" Stroke="Red"/>
+                <Line Panel.ZIndex="7" Canvas.Left="{Binding Path=WaveShapeView.HalfOfActualWidth}" Canvas.Top="0" X1="0" Y1="0" X2="0" Y2="{Binding Path=WaveShapeView.ActualHeight}" StrokeThickness="2" Stroke="Red"/>
 
             </Canvas>
 

@@ -67,14 +67,20 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AboutDialogWindowViewModel.cs" />
+    <Compile Include="AnimationMode.cs" />
     <Compile Include="ComboBoxSelectionItem.cs" />
+    <Compile Include="DoubleAnimationViewModel.cs" />
     <Compile Include="MouseWheelDirection.cs" />
     <Compile Include="MouseWheelGesture.cs" />
     <Compile Include="MusicPlayingStatusType.cs" />
+    <Compile Include="OverviewViewModel.cs" />
     <Compile Include="SampleDataCollection.cs" />
+    <Compile Include="TimeSpanExtensions.cs" />
+    <Compile Include="TimeStampsViewModel.cs" />
     <Compile Include="ViewModel.cs" />
     <Compile Include="WaveShapeViewGridLineViewModel.cs" />
     <Compile Include="TimeStampViewElementViewModel.cs" />
+    <Compile Include="WaveShapeViewModel.cs" />
     <Page Include="AboutDialogWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
