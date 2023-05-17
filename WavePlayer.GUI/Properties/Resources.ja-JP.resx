@@ -163,7 +163,10 @@
     <value>ツール(_T)</value>
   </data>
   <data name="MESSAGE_TEXT_COPIED_TO_CLIPBOARD" xml:space="preserve">
-    <value>クリップボードにコピーしました。</value>
+    <value>現在位置をコピーしました</value>
+  </data>
+  <data name="MESSAGE_TEXT_PASTED_FROM_CLIPBOARD" xml:space="preserve">
+    <value>現在位置を貼りつけました</value>
   </data>
   <data name="OPEN_FILE_FILTER_WAVE" xml:space="preserve">
     <value>Wave ファイル  (.wav)|*.wav</value>
@@ -184,7 +187,7 @@
     <value>Wave ファイルを解析中です…</value>
   </data>
   <data name="STATUS_TEXT_ERROR" xml:space="preserve">
-    <value>Wave ファイルの読み込中または解析中にエラーが発生しました。</value>
+    <value>Wave ファイルの読み込中または解析中にエラーが発生しました</value>
   </data>
   <data name="STATUS_TEXT_LOADING" xml:space="preserve">
     <value>Wave ファイルを読み込み中です…</value>
@@ -199,7 +202,7 @@
     <value>Wave ファイルを再生中です…</value>
   </data>
   <data name="STATUS_TEXT_READY" xml:space="preserve">
-    <value>再生の準備が出来ました。</value>
+    <value>再生の準備が出来ました</value>
   </data>
   <data name="WINDOW_TITLE_ABOUT" xml:space="preserve">
     <value>このソフトウェアについて</value>

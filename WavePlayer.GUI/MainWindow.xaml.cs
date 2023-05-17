@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -23,7 +25,9 @@ namespace WavePlayer.GUI
     {
         private const string _developersUrl = "https://github.com/rougemeilland/VeryLazyWavePlayer";
         private const double _pixelsPerSecondsScaleFactor = 4.0 / 3;
+        private static readonly Regex _pastedTimePattern = new Regex(@"^\s*\[?((?<m>\d+):)?(?<s>\d+(\.\d+))?\]?\s*$", RegexOptions.Compiled);
         private readonly MainWindowViewModel _viewModel;
+        private readonly MusicPlayer _musicPlayer;
 
         public MainWindow()
         {
@@ -42,6 +46,8 @@ namespace WavePlayer.GUI
                 MarkedTime = TimeSpan.Zero,
                 PlayingTime = TimeSpan.Zero,
             };
+
+            _musicPlayer = new MusicPlayer();
 
             _viewModel.OpenCommand =
                 new Command(
@@ -136,16 +142,16 @@ namespace WavePlayer.GUI
             // イベント処理において以下の何れかの対処を必ず行うこと。
             // a) _viewModel.MusicPlayingStatus の値を確認し、a-1 ・ a-2の対処を行うこと。
             //   a-1) _viewModel.MusicPlayingStatus == MusicPlayingStatusType.Playing の場合
-            //       MusicPlayer.Position の値を _viewModel.PlayingTime に反映させる。
+            //       _musicPlayer.Position の値を _viewModel.PlayingTime に反映させる。
             //   a-2) _viewModel.MusicPlayingStatus == MusicPlayingStatusType.PlayingWithMarkerMovement の場合
-            //       MusicPlayer.Position の値を _viewModel.PlayingTime と  _viewModel.MarkedTime に反映させる。
+            //       _musicPlayer.Position の値を _viewModel.PlayingTime と  _viewModel.MarkedTime に反映させる。
             // b) _viewModel.AnimationMode の値を確認し、b-1 ・ b-2の対処を行うこと。
             //   b-1) (_viewModel.AnimationMode & AnimationMode.MoveMarkerPosition) != AnimationMode.Node の場合
-            //       MusicPlayer.Position の値を _viewModel.MarkedTime に反映させる。
+            //       _musicPlayer.Position の値を _viewModel.MarkedTime に反映させる。
             //   b-2) (_viewModel.AnimationMode & AnimationMode.MovePlayingPosition) != AnimationMode.Node の場合
-            //       MusicPlayer.Position の値を _viewModel.PlayingTime に反映させる。
+            //       _musicPlayer.Position の値を _viewModel.PlayingTime に反映させる。
             //
-            // 【MusicPlayer.Positionの値の取得について】
+            // 【_musicPlayer.Positionの値の取得について】
             // Pause() を実行しても、即時に停止するわけではないらしい。
             // 特に画面の再描画を行っている場合などフォアグラウンドの負荷が高い状態で Pause() の直後に Position の値を続けて参照すると
             // 本来はどれも同じ値になるはずが、微妙に異なる値が取得出来てしまうことがある。
@@ -159,24 +165,24 @@ namespace WavePlayer.GUI
                         {
                             Dispatcher.Invoke(() =>
                             {
-                                MusicPlayer.Pause();
-                                var time = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                var time = _musicPlayer.Position;
                                 if ((_viewModel.AnimationMode & AnimationMode.MoveMarkerPosition) != AnimationMode.None)
                                     _viewModel.MarkedTime = time;
                                 if ((_viewModel.AnimationMode & AnimationMode.MovePlayingPosition) != AnimationMode.None)
                                     _viewModel.PlayingTime = time;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Stepping;
                             });
                             await Task.Delay(TimeSpan.FromMilliseconds(10));
                             Dispatcher.Invoke(() =>
                             {
-                                MusicPlayer.Pause();
+                                _musicPlayer.Pause();
                                 _viewModel.MarkedTime += TimeSpan.FromMilliseconds(10);
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                             });
                         }));
@@ -189,26 +195,26 @@ namespace WavePlayer.GUI
                         {
                             case MusicPlayingStatusType.Ready:
                             case MusicPlayingStatusType.Paused:
-                                MusicPlayer.Pause();
+                                _musicPlayer.Pause();
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.PlayingWithMarkerMovement;
                                 break;
                             case MusicPlayingStatusType.Playing:
-                                MusicPlayer.Pause();
-                                _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                                _musicPlayer.Pause();
+                                _viewModel.PlayingTime = _musicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
                             {
-                                MusicPlayer.Pause();
-                                var currentTime = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                var currentTime = _musicPlayer.Position;
                                 _viewModel.MarkedTime = currentTime;
                                 _viewModel.PlayingTime = currentTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             }
@@ -225,26 +231,26 @@ namespace WavePlayer.GUI
                         {
                             case MusicPlayingStatusType.Ready:
                             case MusicPlayingStatusType.Paused:
-                                MusicPlayer.Pause();
+                                _musicPlayer.Pause();
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Playing;
                                 break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
-                                MusicPlayer.Pause();
-                                _viewModel.MarkedTime = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                _viewModel.MarkedTime = _musicPlayer.Position;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Playing;
                                 break;
                             case MusicPlayingStatusType.Playing:
-                                MusicPlayer.Pause();
-                                _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                                _musicPlayer.Pause();
+                                _viewModel.PlayingTime = _musicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Play();
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Playing;
                                 break;
                             default:
@@ -260,24 +266,24 @@ namespace WavePlayer.GUI
                         {
                             case MusicPlayingStatusType.Ready:
                             case MusicPlayingStatusType.Paused:
-                                MusicPlayer.Pause();
+                                _musicPlayer.Pause();
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             case MusicPlayingStatusType.Playing:
-                                MusicPlayer.Pause();
-                                _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                                _musicPlayer.Pause();
+                                _viewModel.PlayingTime = _musicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
-                                MusicPlayer.Pause();
-                                var position = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                var position = _musicPlayer.Position;
                                 _viewModel.MarkedTime = position;
                                 _viewModel.PlayingTime = position;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                                 break;
                             default:
@@ -325,18 +331,18 @@ namespace WavePlayer.GUI
                         {
                             case MusicPlayingStatusType.Ready:
                             case MusicPlayingStatusType.Paused:
-                                MusicPlayer.Pause();
+                                _musicPlayer.Pause();
                                 _viewModel.MarkedTime = TimeSpan.Zero;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Position = _viewModel.MarkedTime;
                                 break;
                             case MusicPlayingStatusType.Playing:
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
-                                MusicPlayer.Pause();
+                                _musicPlayer.Pause();
                                 _viewModel.MarkedTime = TimeSpan.Zero;
                                 _viewModel.PlayingTime = _viewModel.MarkedTime;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Play();
                                 break;
                             default:
                                 break;
@@ -363,8 +369,37 @@ namespace WavePlayer.GUI
                         {
                         }
 
-                        _viewModel.CopiedMarkedTime = false;
-                        _viewModel.CopiedMarkedTime = true;
+                        _viewModel.MarkedTimeClipboardAction = ClipboardActionType.Copy;
+                        _viewModel.BlinkMarkedTimeText = false;
+                        _viewModel.BlinkMarkedTimeText = true;
+                    });
+            _viewModel.PasteMarkerTextCommand
+                = new Command(
+                    p => CanPlayWaveFile(),
+                    p =>
+                    {
+                        var pastedData = Clipboard.GetDataObject();
+                        if (!(pastedData is null))
+                        {
+                            var pastedText = pastedData.GetData(DataFormats.Text, true) as string;
+                            if (!string.IsNullOrEmpty(pastedText))
+                            {
+                                var match = _pastedTimePattern.Match(pastedText);
+                                if (match.Success)
+                                {
+                                    var minutes = match.Groups["m"].Success ? int.Parse(match.Groups["m"].Value, NumberStyles.None, CultureInfo.InvariantCulture.NumberFormat) : 0;
+                                    var seconds = double.Parse(match.Groups["s"].Value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat);
+                                    var pastedTime = TimeSpan.FromSeconds(minutes * 60 + seconds);
+                                    if (pastedTime >= TimeSpan.Zero && pastedTime < _viewModel.MusicDuration)
+                                    {
+                                        _viewModel.MarkedTimeClipboardAction = ClipboardActionType.Paste;
+                                        _viewModel.BlinkMarkedTimeText = false;
+                                        _viewModel.BlinkMarkedTimeText = true;
+                                        MoveMarkedTimeByUser(pastedTime);
+                                    }
+                                }
+                            }
+                        }
                     });
             _viewModel.ExpandTimeLineCommand =
                 new Command(
@@ -373,21 +408,21 @@ namespace WavePlayer.GUI
                         switch (_viewModel.MusicPlayingStatus)
                         {
                             case MusicPlayingStatusType.Playing:
-                                MusicPlayer.Pause();
-                                _viewModel.PlayingTime = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                _viewModel.PlayingTime = _musicPlayer.Position;
                                 _viewModel.WaveShapeView.PixelsPerSeconds *= _pixelsPerSecondsScaleFactor;
-                                MusicPlayer.Position = _viewModel.PlayingTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.PlayingTime;
+                                _musicPlayer.Play();
                                 break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
                             {
-                                MusicPlayer.Pause();
-                                var currentTime = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                var currentTime = _musicPlayer.Position;
                                 _viewModel.MarkedTime = currentTime;
                                 _viewModel.PlayingTime = currentTime;
                                 _viewModel.WaveShapeView.PixelsPerSeconds *= _pixelsPerSecondsScaleFactor;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Play();
                                 break;
                             }
                             default:
@@ -402,21 +437,21 @@ namespace WavePlayer.GUI
                         switch (_viewModel.MusicPlayingStatus)
                         {
                             case MusicPlayingStatusType.Playing:
-                                MusicPlayer.Pause();
-                                _viewModel.PlayingTime = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                _viewModel.PlayingTime = _musicPlayer.Position;
                                 _viewModel.WaveShapeView.PixelsPerSeconds /= _pixelsPerSecondsScaleFactor;
-                                MusicPlayer.Position = _viewModel.PlayingTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.PlayingTime;
+                                _musicPlayer.Play();
                                 break;
                             case MusicPlayingStatusType.PlayingWithMarkerMovement:
                             {
-                                MusicPlayer.Pause();
-                                var currentTime = MusicPlayer.Position;
+                                _musicPlayer.Pause();
+                                var currentTime = _musicPlayer.Position;
                                 _viewModel.MarkedTime = currentTime;
                                 _viewModel.PlayingTime = currentTime;
                                 _viewModel.WaveShapeView.PixelsPerSeconds /= _pixelsPerSecondsScaleFactor;
-                                MusicPlayer.Position = _viewModel.MarkedTime;
-                                MusicPlayer.Play();
+                                _musicPlayer.Position = _viewModel.MarkedTime;
+                                _musicPlayer.Play();
                                 break;
                             }
                             default:
@@ -436,10 +471,10 @@ namespace WavePlayer.GUI
                                     _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Loading;
                                     _viewModel.MarkedTime = TimeSpan.Zero;
                                     _viewModel.PlayingTime = TimeSpan.Zero;
-                                    MusicPlayer.Pause();
-                                    MusicPlayer.Volume = _viewModel.PlayerVolume / 100.0;
-                                    MusicPlayer.Source = new Uri(_viewModel.CurrentMusicFilePath);
-                                    MusicPlayer.Position = _viewModel.MarkedTime;
+                                    _musicPlayer.Pause();
+                                    _musicPlayer.Volume = _viewModel.PlayerVolume / 100.0;
+                                    _musicPlayer.Open(new Uri(_viewModel.CurrentMusicFilePath));
+                                    _musicPlayer.Position = _viewModel.MarkedTime;
                                     _ = Task.Run(
                                         () =>
                                         {
@@ -482,6 +517,7 @@ namespace WavePlayer.GUI
                                 _viewModel.PositionBackward60secCommand.RaiseCanExecuteChanged();
                                 _viewModel.PositionHomeCommand.RaiseCanExecuteChanged();
                                 _viewModel.CopyMarkerTextCommand.RaiseCanExecuteChanged();
+                                _viewModel.PasteMarkerTextCommand.RaiseCanExecuteChanged();
                                 break;
                             default:
                                 break;
@@ -500,8 +536,6 @@ namespace WavePlayer.GUI
                         _ = Dispatcher.Invoke(
                             () => _viewModel.CurrentMusicFilePath = args[1]));
             }
-
-            // TODO: Ctrl+V で "nn:nn.nn" または "[nn:nn.nn]" 形式のテキストをペーストすることにより位置決め
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -575,25 +609,25 @@ namespace WavePlayer.GUI
             {
                 case MusicPlayingStatusType.Ready:
                 case MusicPlayingStatusType.Paused:
-                    MusicPlayer.Pause();
+                    _musicPlayer.Pause();
                     _viewModel.MarkedTime = AddMarkedTime(_viewModel.MarkedTime, value, _viewModel.MusicDuration);
                     _viewModel.PlayingTime = _viewModel.MarkedTime;
-                    MusicPlayer.Position = _viewModel.MarkedTime;
+                    _musicPlayer.Position = _viewModel.MarkedTime;
                     break;
                 case MusicPlayingStatusType.Playing:
-                    MusicPlayer.Pause();
-                    _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                    _musicPlayer.Pause();
+                    _viewModel.PlayingTime = _musicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                     _viewModel.MarkedTime = AddMarkedTime(_viewModel.MarkedTime, value, _viewModel.MusicDuration);
                     _viewModel.PlayingTime = _viewModel.MarkedTime;
-                    MusicPlayer.Position = _viewModel.MarkedTime;
-                    MusicPlayer.Play();
+                    _musicPlayer.Position = _viewModel.MarkedTime;
+                    _musicPlayer.Play();
                     break;
                 case MusicPlayingStatusType.PlayingWithMarkerMovement:
-                    MusicPlayer.Pause();
-                    _viewModel.MarkedTime = AddMarkedTime(MusicPlayer.Position, value, _viewModel.MusicDuration);
+                    _musicPlayer.Pause();
+                    _viewModel.MarkedTime = AddMarkedTime(_musicPlayer.Position, value, _viewModel.MusicDuration);
                     _viewModel.PlayingTime = _viewModel.MarkedTime;
-                    MusicPlayer.Position = _viewModel.MarkedTime;
-                    MusicPlayer.Play();
+                    _musicPlayer.Position = _viewModel.MarkedTime;
+                    _musicPlayer.Play();
                     break;
                 default:
                     break;
@@ -618,7 +652,7 @@ namespace WavePlayer.GUI
             if (newVolume < 0)
                 newVolume = 0;
             _viewModel.PlayerVolume = newVolume;
-            MusicPlayer.Volume = _viewModel.PlayerVolume / 100.0;
+            _musicPlayer.Volume = _viewModel.PlayerVolume / 100.0;
         }
 
         private void MoveMarkedTimeByUser(TimeSpan time)
@@ -631,29 +665,29 @@ namespace WavePlayer.GUI
             {
                 case MusicPlayingStatusType.Ready:
                 case MusicPlayingStatusType.Paused:
-                    MusicPlayer.Pause();
+                    _musicPlayer.Pause();
                     _viewModel.MarkedTime = time;
                     _viewModel.PlayingTime = time;
-                    MusicPlayer.Position = time;
+                    _musicPlayer.Position = time;
                     _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                     break;
                 case MusicPlayingStatusType.Playing:
-                    MusicPlayer.Pause();
-                    _viewModel.PlayingTime = MusicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
+                    _musicPlayer.Pause();
+                    _viewModel.PlayingTime = _musicPlayer.Position; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                     _viewModel.MarkedTime = time;
                     _viewModel.PlayingTime = time;
-                    MusicPlayer.Position = time;
+                    _musicPlayer.Position = time;
                     _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                     break;
                 case MusicPlayingStatusType.PlayingWithMarkerMovement:
                 {
-                    MusicPlayer.Pause();
-                    var currentTime = MusicPlayer.Position;
+                    _musicPlayer.Pause();
+                    var currentTime = _musicPlayer.Position;
                     _viewModel.MarkedTime = currentTime; // _viewModel.MarkedTime の変更イベントを発生させるために必要なコード
                     _viewModel.PlayingTime = currentTime; // _viewModel.PlayingTime の変更イベントを発生させるために必要なコード
                     _viewModel.MarkedTime = time;
                     _viewModel.PlayingTime = time;
-                    MusicPlayer.Position = time;
+                    _musicPlayer.Position = time;
                     _viewModel.MusicPlayingStatus = MusicPlayingStatusType.Paused;
                     break;
                 }
@@ -682,17 +716,17 @@ namespace WavePlayer.GUI
             switch (_viewModel.MusicPlayingStatus)
             {
                 case MusicPlayingStatusType.Playing:
-                    MusicPlayer.Pause();
-                    _viewModel.PlayingTime = MusicPlayer.Position;
-                    MusicPlayer.Position = _viewModel.PlayingTime;
+                    _musicPlayer.Pause();
+                    _viewModel.PlayingTime = _musicPlayer.Position;
+                    _musicPlayer.Position = _viewModel.PlayingTime;
                     break;
                 case MusicPlayingStatusType.PlayingWithMarkerMovement:
                 {
-                    MusicPlayer.Pause();
-                    var currentTime = MusicPlayer.Position;
+                    _musicPlayer.Pause();
+                    var currentTime = _musicPlayer.Position;
                     _viewModel.MarkedTime = currentTime;
                     _viewModel.PlayingTime = currentTime;
-                    MusicPlayer.Position = _viewModel.MarkedTime;
+                    _musicPlayer.Position = _viewModel.MarkedTime;
                     break;
                 }
                 default:

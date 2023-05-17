@@ -196,11 +196,20 @@ namespace WavePlayer.GUI.Properties {
         }
         
         /// <summary>
-        ///   Copied to clipboard. に類似しているローカライズされた文字列を検索します。
+        ///   Copied current position. に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MESSAGE_TEXT_COPIED_TO_CLIPBOARD {
             get {
                 return ResourceManager.GetString("MESSAGE_TEXT_COPIED_TO_CLIPBOARD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Pasted current position. に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MESSAGE_TEXT_PASTED_FROM_CLIPBOARD {
+            get {
+                return ResourceManager.GetString("MESSAGE_TEXT_PASTED_FROM_CLIPBOARD", resourceCulture);
             }
         }
         

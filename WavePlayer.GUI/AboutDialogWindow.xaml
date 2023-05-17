@@ -10,18 +10,18 @@
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner">
     <StackPanel Orientation="Vertical" Margin="5">
-        <StackPanel Orientation="Horizontal" Margin="5">
-            <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_VERSION, Mode=OneWay}" Margin="3"/>
-            <TextBox VerticalAlignment="Center" Text="{Binding Version}" IsReadOnly="True" Padding="5"/>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="5">
-            <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_COPYRIGHT, Mode=OneWay}" Margin="3"/>
-            <TextBox VerticalAlignment="Center" Text="{Binding Copyright}" IsReadOnly="True" Padding="2"/>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="5">
-            <TextBlock VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_URL, Mode=OneWay}" Margin="3"/>
-            <TextBox VerticalAlignment="Center" TextWrapping="NoWrap" Text="{Binding Url}" IsReadOnly="True" Padding="2"/>
-        </StackPanel>
+        <DockPanel Margin="5">
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_VERSION, Mode=OneWay}" Margin="3"/>
+            <TextBox VerticalAlignment="Center" HorizontalAlignment="Stretch" Text="{Binding Version}" IsReadOnly="True" Padding="5"/>
+        </DockPanel>
+        <DockPanel Margin="5">
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_COPYRIGHT, Mode=OneWay}" Margin="3"/>
+            <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Text="{Binding Copyright}" IsReadOnly="True" Padding="2"/>
+        </DockPanel>
+        <DockPanel Margin="5">
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.LABEL_TEXT_URL, Mode=OneWay}" Margin="3"/>
+            <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Center" TextWrapping="NoWrap" Text="{Binding Url}" IsReadOnly="True" Padding="2"/>
+        </DockPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="2">
             <Button VerticalAlignment="Center" Width="70" Content="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.BUTTON_TEXT_OK, Mode=OneWay}" Command="{Binding OkCommand}" Padding="5"/>
         </StackPanel>

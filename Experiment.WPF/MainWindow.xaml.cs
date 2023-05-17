@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -44,32 +46,23 @@ namespace Experiment.WPF
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            var storyboard1 = (Storyboard)Resources["MoveRectangle1"];
-            var storyboard2 = (Storyboard)Resources["MoveRectangle2"];
-            _viewModel.From1 = 100;
-            _viewModel.To1 = -500;
-            _viewModel.DurationTime1 = TimeSpan.FromSeconds(3);
-            _viewModel.From2 = 100;
-            _viewModel.To2 = 700;
-            _viewModel.DurationTime2 = TimeSpan.FromSeconds(3);
-#if true
-            storyboard1.Begin();
-            storyboard2.Begin();
-            _viewModel.IsRunning = true;
-#else
-            if (_viewModel.IsRunning)
+            var data = Clipboard.GetDataObject();
+            if (!(data is null))
             {
-                storyboard1.Stop();
-                storyboard2.Stop();
-                _viewModel.IsRunning = false;
+                var text = data.GetData(DataFormats.Text, true) as string;
+                if (!string.IsNullOrEmpty(text))
+                {
+                    var pattern = new Regex(@"^\s*\[?((?<m>\d+):)?(?<s>\d+(\.\d+))?\]?\s*$", RegexOptions.Compiled);
+                    var match = pattern.Match(text);
+                    if (match.Success)
+                    {
+                        var m = match.Groups["m"].Success ? int.Parse(match.Groups["m"].Value, NumberStyles.None, CultureInfo.InvariantCulture.NumberFormat) : 0;
+                        var s = double.Parse(match.Groups["s"].Value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture.NumberFormat);
+                        var time = TimeSpan.FromSeconds(m * 60 + s);
+                        PastedText.Text = $"{Math.Floor(time.TotalMinutes):F0}:{time.Seconds:D2}.{time.Milliseconds:D3}";
+                    }
+                }
             }
-            else
-            {
-                storyboard1.Begin();
-                storyboard2.Begin();
-                _viewModel.IsRunning = true;
-            }
-#endif
         }
     }
 }

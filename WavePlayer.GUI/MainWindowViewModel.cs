@@ -15,11 +15,12 @@ namespace WavePlayer.GUI
         private TimeSpan _playingTime;
         private TimeSpan _markedTime;
         private TimeSpan _musicDuration;
-        private bool _copiedMarkedTime;
+        private ClipboardActionType _markedTimeClipboardAction;
         private PointCollection _waveShapePoints;
         private AnimationMode _animationMode;
         private bool _isVisiblePlayView;
         private bool isValidMusicPlayingStatus;
+        private bool _blinkMarkedTimeText;
 
         public MainWindowViewModel(Action<string, bool> storyboardPlayer)
         {
@@ -115,6 +116,7 @@ namespace WavePlayer.GUI
         public Command VolumeUpCommand { get; set; }
         public Command VolumeDownCommand { get; set; }
         public Command CopyMarkerTextCommand { get; set; }
+        public Command PasteMarkerTextCommand { get; set; }
         public Command ExpandTimeLineCommand { get; set; }
         public Command ShrinkTimeLineCommand { get; set; }
 
@@ -310,16 +312,30 @@ namespace WavePlayer.GUI
         public bool VolumeLevel9 => PlayerVolume > 80;
         public bool VolumeLevel10 => PlayerVolume > 90;
 
-        public bool CopiedMarkedTime
+        public bool BlinkMarkedTimeText
         {
-            get => _copiedMarkedTime;
+            get => _blinkMarkedTimeText;
+            
+            set
+            {
+                if (value != _blinkMarkedTimeText)
+                {
+                    _blinkMarkedTimeText = value;
+                    RaisePropertyChangedEvent(nameof(BlinkMarkedTimeText));
+                }
+            }
+        }
+
+        public ClipboardActionType MarkedTimeClipboardAction
+        {
+            get => _markedTimeClipboardAction;
 
             set
             {
-                if (value != _copiedMarkedTime)
+                if (value != _markedTimeClipboardAction)
                 {
-                    _copiedMarkedTime = value;
-                    RaisePropertyChangedEvent(nameof(CopiedMarkedTime));
+                    _markedTimeClipboardAction = value;
+                    RaisePropertyChangedEvent(nameof(MarkedTimeClipboardAction));
                 }
             }
         }

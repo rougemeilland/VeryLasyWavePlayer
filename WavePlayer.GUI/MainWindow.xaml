@@ -57,6 +57,7 @@
         <KeyBinding Key="Add" Command="{Binding Path=VolumeUpCommand}"/>
         <KeyBinding Key="Subtract" Command="{Binding Path=VolumeDownCommand}"/>
         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding Path=CopyMarkerTextCommand}"/>
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding Path=PasteMarkerTextCommand}"/>
         <KeyBinding Key="PageUp" Command="{Binding Path=ExpandTimeLineCommand}"/>
         <KeyBinding Key="PageDown" Command="{Binding Path=ShrinkTimeLineCommand}"/>
         <MouseBinding Gesture="{x:Static local:MouseWheelGesture.CtrlUp}" Command="{Binding Path=ExpandTimeLineCommand}"/>
@@ -272,7 +273,7 @@
                     <Border.Style>
                         <Style TargetType="Border">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Path=CopiedMarkedTime}" Value="True">
+                                <DataTrigger Binding="{Binding Path=BlinkMarkedTimeText}" Value="True">
                                     <DataTrigger.EnterActions>
                                         <BeginStoryboard>
                                             <Storyboard>
@@ -292,7 +293,7 @@
                             <Popup.Style>
                                 <Style TargetType="Popup">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=CopiedMarkedTime}" Value="True">
+                                        <DataTrigger Binding="{Binding Path=BlinkMarkedTimeText}" Value="True">
                                             <DataTrigger.EnterActions>
                                                 <BeginStoryboard>
                                                     <Storyboard>
@@ -308,7 +309,20 @@
                                 </Style>
                             </Popup.Style>
                             <Border BorderBrush="#777777" Background="White" BorderThickness="1" CornerRadius="5">
-                                <TextBlock Text="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MESSAGE_TEXT_COPIED_TO_CLIPBOARD, Mode=OneWay}" Foreground="#333333" Margin="5"/>
+                                <TextBlock Foreground="#333333" Margin="5">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=MarkedTimeClipboardAction}" Value="Copy">
+                                                    <Setter Property="Text" Value="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MESSAGE_TEXT_COPIED_TO_CLIPBOARD, Mode=OneWay}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Path=MarkedTimeClipboardAction}" Value="Paste">
+                                                    <Setter Property="Text" Value="{Binding Source={x:Static local:ResourceService.Current}, Path=Resources.MESSAGE_TEXT_PASTED_FROM_CLIPBOARD, Mode=OneWay}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Border>
                         </Popup>
                         <TextBlock VerticalAlignment="Center" Text="{Binding Path=MarkedTimeText}" Margin="3" x:Name="MarkedTimeTextBlock" x:FieldModifier="private"/>
@@ -319,7 +333,6 @@
                     <TextBlock VerticalAlignment="Center" Text="{Binding Path=PlayingTimeText}" Margin="3"/>
                 </Border>
             </StackPanel>
-            <MediaElement DockPanel.Dock="Bottom" Width="1" Height="1" Visibility="Collapsed" LoadedBehavior="Manual" x:Name="MusicPlayer" x:FieldModifier="private"/>
 
             <!-- オーバービュー -->
             <Canvas DockPanel.Dock="Top" Height="30" ClipToBounds="True" SizeChanged="OverviewViewSizeChangedEventHandler" MouseDown="OverviewViewMouseDownEventHandler">

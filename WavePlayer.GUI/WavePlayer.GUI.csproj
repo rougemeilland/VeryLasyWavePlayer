@@ -68,10 +68,12 @@
     </ApplicationDefinition>
     <Compile Include="AboutDialogWindowViewModel.cs" />
     <Compile Include="AnimationMode.cs" />
+    <Compile Include="ClipboardActionType.cs" />
     <Compile Include="ComboBoxSelectionItem.cs" />
     <Compile Include="DoubleAnimationViewModel.cs" />
     <Compile Include="MouseWheelDirection.cs" />
     <Compile Include="MouseWheelGesture.cs" />
+    <Compile Include="MusicPlayer.cs" />
     <Compile Include="MusicPlayingStatusType.cs" />
     <Compile Include="OverviewViewModel.cs" />
     <Compile Include="SampleDataCollection.cs" />

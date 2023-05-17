@@ -163,7 +163,10 @@
     <value>_Tool</value>
   </data>
   <data name="MESSAGE_TEXT_COPIED_TO_CLIPBOARD" xml:space="preserve">
-    <value>Copied to clipboard.</value>
+    <value>Copied current position.</value>
+  </data>
+  <data name="MESSAGE_TEXT_PASTED_FROM_CLIPBOARD" xml:space="preserve">
+    <value>Pasted current position.</value>
   </data>
   <data name="OPEN_FILE_FILTER_WAVE" xml:space="preserve">
     <value>Wave files (.wav)|*.wav</value>
