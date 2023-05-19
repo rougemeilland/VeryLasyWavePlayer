@@ -61,6 +61,7 @@
     <Compile Include="Wave\WaveFormatTag.cs" />
     <Compile Include="Wave\WaveId3TagChunk.cs" />
     <Compile Include="Wave\WaveListChunk.cs" />
+    <Compile Include="Wave\WaveUnknownChunk.cs" />
     <Compile Include="Wave\WaveSampleDataType.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -11,13 +11,14 @@ namespace Palmtree.Media.Wave
         private const int _riffChunkId = 0x46464952;
         private const int _waveFormatId = 0x45564157;
 
-        private WaveFileContainer(WaveFormatChunk format, WaveDataChunk data, WaveFactChunk fact, WaveId3TagChunk id3, WaveListChunk list)
+        private WaveFileContainer(WaveFormatChunk format, WaveDataChunk data, WaveFactChunk fact, WaveId3TagChunk id3, WaveListChunk list, IEnumerable<WaveUnknownChunk> others)
         {
             Format = format ?? throw new ArgumentNullException(nameof(format));
             Data = data ?? throw new ArgumentNullException(nameof(data));
             Fact = fact;
             Id3 = id3;
             List = list;
+            Others = others.ToList();
         }
 
         public int SamplesPerSeconds
@@ -124,6 +125,7 @@ namespace Palmtree.Media.Wave
                 var id3Chunk = (WaveId3TagChunk)null;
                 var factChunk = (WaveFactChunk)null;
                 var listChunk = (WaveListChunk)null;
+                var otherChunks = new List<WaveUnknownChunk>();
                 while (!buffer.IsEmpty)
                 {
                     if (buffer.Length < 8)
@@ -153,7 +155,12 @@ namespace Palmtree.Media.Wave
                             buffer = buffer.Slice(listChunk.TotalBytes);
                             break;
                         default:
-                            throw new BadMediaFormatException($"An unsupported chunk was found.: 0x{chunkId:x8}(\"{(char)(byte)(chunkId >> 0)}{(char)(byte)(chunkId >> 8)}{(char)(byte)(chunkId >> 16)}{(char)(byte)(chunkId >> 24)}\")");
+                        {
+                            var unknownChunk = WaveUnknownChunk.Deserialize(buffer);
+                            buffer = buffer.Slice(unknownChunk.TotalBytes);
+                            otherChunks.Add(unknownChunk);
+                            break;
+                        }
                     }
                 }
 
@@ -162,7 +169,7 @@ namespace Palmtree.Media.Wave
                     ? throw new BadMediaFormatException("The wave stream does not contain chunk \"fmt\".")
                     : dataChunk is null
                     ? throw new BadMediaFormatException("The wave stream does not contain chunk \"data\".")
-                    : new WaveFileContainer(formatChunk, dataChunk, factChunk, id3Chunk, listChunk);
+                    : new WaveFileContainer(formatChunk, dataChunk, factChunk, id3Chunk, listChunk, otherChunks);
             }
             catch (UnexpectedEndOfFileException ex)
             {
@@ -193,6 +200,8 @@ namespace Palmtree.Media.Wave
                 segments = segments.Concat(Id3.Serialize());
             if (!(List is null))
                 segments = segments.Concat(List.Serialize());
+            foreach (var otherChunk in Others)
+                segments = segments.Concat(otherChunk.Serialize());
             segments = segments.Concat(dataChunk).ToList();
             var totalSize = segments.Sum(segment => segment.Length);
             var containerBytes = new byte[12 + totalSize];
@@ -215,5 +224,6 @@ namespace Palmtree.Media.Wave
         internal WaveFactChunk Fact { get; }
         internal WaveId3TagChunk Id3 { get; }
         internal WaveListChunk List { get; }
+        internal IEnumerable<WaveUnknownChunk> Others {get;}
     }
 }
