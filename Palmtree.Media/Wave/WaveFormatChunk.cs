@@ -174,7 +174,7 @@ namespace Palmtree.Media.Wave
             var bitsPerSample = buffer.Slice(14, 2).AsUint16Le();
             buffer = buffer.Slice(16);
             if (waveFormatTag != WaveFormatTag.WAVE_FORMAT_PCM && waveFormatTag != WaveFormatTag.WAVE_FORMAT_EXTENSIBLE)
-                throw new BadMediaFormatException($"Unsupported WAVE format.: formatTag={waveFormatTag}");
+                throw new NotSupportedException($"Unsupported WAVE format.: formatTag={waveFormatTag}");
             if (waveFormatTag == WaveFormatTag.WAVE_FORMAT_PCM && chunkSize != 16)
                 throw new BadMediaFormatException($"Wrong size of \"fmt\" chunk.: formatTag={waveFormatTag}, chunkSize={chunkSize}");
             if (buffer.IsEmpty)

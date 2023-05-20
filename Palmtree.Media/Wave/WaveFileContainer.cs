@@ -110,9 +110,9 @@ namespace Palmtree.Media.Wave
                 if (buffer.Slice(0, 4).AsUint32Le() != _riffChunkId)
                     throw new BadMediaFormatException("Input stream is not in RIFF format.");
                 var chunkSize = checked((int)buffer.Slice(4, 4).AsUint32Le());
-                if (chunkSize < 4)
+                if (chunkSize < 8)
                     throw new BadMediaFormatException("Input stream is too short.");
-                if (checked(8 + chunkSize) != buffer.Length)
+                if (buffer.Length - 2  >= checked(8 + chunkSize))
                     throw new BadMediaFormatException("The end of RIFF data has been reached, but there is still data left in the stream.");
                 buffer = buffer.Slice(8);
 
