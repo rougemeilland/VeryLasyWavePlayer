@@ -1,6 +1,7 @@
 ﻿namespace Palmtree.Media.Wave
 {
     public enum WaveSampleDataType
+        : ushort
     {
         Unknown = 0,
         Unsigned8bit,

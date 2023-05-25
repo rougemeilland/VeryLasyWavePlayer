@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="BadMediaFormatException.cs" />
     <Compile Include="ChannelLayout.cs" />
+    <Compile Include="NotSupportedMediaException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Wave\WaveDataChunk.cs" />
     <Compile Include="Wave\WaveFactChunk.cs" />

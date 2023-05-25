@@ -79,8 +79,16 @@ namespace Palmtree.Media.Wave
                             return WaveSampleDataType.Unsigned8bit;
                         case 16:
                             return WaveSampleDataType.LittleEndianSigned16bit;
+
+                        // 16bit を超えるサンプルデータサイズであるにもかかわらず拡張ヘッダを配置しないエンコーダが存在する。
+                        case 24:
+                            return WaveSampleDataType.LittleEndianSigned24bit;
+                        case 32:
+                            return WaveSampleDataType.LittleEndianSigned32bit;
+                        case 64:
+                            return WaveSampleDataType.LittleEndianSigned64bit;
                         default:
-                            throw new BadMediaFormatException($"Wrong number of bitsPerSample. Maybe your wave stream is corrupted.: bitsPerSample={BitsPerSample}, subFormat=(null)");
+                            throw new BadImageFormatException($"Wrong number of bitsPerSample. Maybe your wave stream is corrupted.: bitsPerSample={BitsPerSample}, subFormat=(null)");
                     }
                 }
                 else if (_extendedInfo is WaveFormatExtensible extendedFormatExtensible)
@@ -100,7 +108,7 @@ namespace Palmtree.Media.Wave
                             case 64:
                                 return WaveSampleDataType.LittleEndianSigned64bit;
                             default:
-                                throw new BadMediaFormatException($"Wrong number of bitsPerSample. Maybe your wave stream is corrupted.: bitsPerSample={BitsPerSample}, subFormat=\"{extendedFormatExtensible.SubFormat}\"");
+                                throw new NotSupportedMediaException($"Wrong number of bitsPerSample. Maybe your wave stream is corrupted.: bitsPerSample={BitsPerSample}, subFormat=\"{extendedFormatExtensible.SubFormat}\"");
                         }
                     }
                     else if (extendedFormatExtensible.SubFormat == WaveFormatExtensible.SUBTYPE_IEEE_FLOAT)
@@ -112,17 +120,17 @@ namespace Palmtree.Media.Wave
                             case 64:
                                 return WaveSampleDataType.LittleEndian64bitFloat;
                             default:
-                                throw new BadMediaFormatException($"Wrong number of bitsPerSample. Maybe your wave stream is corrupted.: bitsPerSample={BitsPerSample}, subFormat=\"{extendedFormatExtensible.SubFormat}\"");
+                                throw new NotSupportedMediaException($"Wrong number of bitsPerSample. Maybe your wave stream is corrupted.: bitsPerSample={BitsPerSample}, subFormat=\"{extendedFormatExtensible.SubFormat}\"");
                         }
                     }
                     else
                     {
-                        throw new NotSupportedException($"Unsupported sub format.: subFormat=\"{extendedFormatExtensible.SubFormat}\"");
+                        throw new NotSupportedMediaException($"Unsupported sub format.: subFormat=\"{extendedFormatExtensible.SubFormat}\"");
                     }
                 }
                 else
                 {
-                    throw new BadMediaFormatException("Unknown sample data type.");
+                    throw new NotSupportedMediaException("Unknown sample data type.");
                 }
             }
         }
@@ -173,41 +181,51 @@ namespace Palmtree.Media.Wave
             var blockSize = buffer.Slice(12, 2).AsUint16Le();
             var bitsPerSample = buffer.Slice(14, 2).AsUint16Le();
             buffer = buffer.Slice(16);
-            if (waveFormatTag != WaveFormatTag.WAVE_FORMAT_PCM && waveFormatTag != WaveFormatTag.WAVE_FORMAT_EXTENSIBLE)
-                throw new NotSupportedException($"Unsupported WAVE format.: formatTag={waveFormatTag}");
-            if (waveFormatTag == WaveFormatTag.WAVE_FORMAT_PCM && chunkSize != 16)
-                throw new BadMediaFormatException($"Wrong size of \"fmt\" chunk.: formatTag={waveFormatTag}, chunkSize={chunkSize}");
-            if (buffer.IsEmpty)
+            switch (waveFormatTag)
             {
-                return
-                    new WaveFormatChunk(
-                        checked(chunkSize + 8),
-                        waveFormatTag,
-                        channels,
-                        samplesPerSeconds,
-                        averageBytesPerSeconds,
-                        blockSize,
-                        bitsPerSample,
-                        null);
-            }
-            else
-            {
-                if (buffer.Length < 2)
-                    throw new BadMediaFormatException("The length of the \"fmt\" chunk is incorrect. Maybe your wavestream is corrupted.");
-                var extendedInfoSize = buffer.Slice(0, 2).AsUint16Le();
-                if (checked(2 + extendedInfoSize) != buffer.Length)
-                    throw new BadMediaFormatException("The length of the \"fmt\" chunk is incorrect. Maybe your wavestream is corrupted.");
-                var extendedInfo = WaveFormatExtendedInfo.Deserialize(waveFormatTag, buffer.Slice(2));
-                return
-                    new WaveFormatChunk(
-                        checked(chunkSize + 8),
-                        waveFormatTag,
-                        channels,
-                        samplesPerSeconds,
-                        averageBytesPerSeconds,
-                        blockSize,
-                        bitsPerSample,
-                        extendedInfo);
+                case WaveFormatTag.WAVE_FORMAT_PCM:
+                {
+                    // PCM の場合でも拡張ヘッダ領域を付加しかつ拡張ヘッダサイズを0にするwavエンコーダが存在するため、
+                    // 拡張ヘッダが存在する場合は拡張ヘッダ長が0であることを確認する。
+                    if (buffer.Length >= 2)
+                    {
+                        var extendedInfoSize = buffer.Slice(0, 2).AsUint16Le();
+                        if (extendedInfoSize > 0)
+                            throw new BadMediaFormatException($"Wrong size of \"fmt\" chunk.: formatTag={waveFormatTag}, chunkSize={chunkSize}, extendedInfoSize={extendedInfoSize}");
+                    }
+
+                    return
+                        new WaveFormatChunk(
+                            checked(chunkSize + 8),
+                            waveFormatTag,
+                            channels,
+                            samplesPerSeconds,
+                            averageBytesPerSeconds,
+                            blockSize,
+                            bitsPerSample,
+                            null);
+                }
+                case WaveFormatTag.WAVE_FORMAT_EXTENSIBLE:
+                {
+                    if (buffer.Length < 2)
+                        throw new BadMediaFormatException("The length of the \"fmt\" chunk is incorrect. Maybe your wavestream is corrupted.");
+                    var extendedInfoSize = buffer.Slice(0, 2).AsUint16Le();
+                    if (checked(2 + extendedInfoSize) != buffer.Length)
+                        throw new BadMediaFormatException("The length of the \"fmt\" chunk is incorrect. Maybe your wavestream is corrupted.");
+                    var extendedInfo = WaveFormatExtendedInfo.Deserialize(waveFormatTag, buffer.Slice(2));
+                    return
+                        new WaveFormatChunk(
+                            checked(chunkSize + 8),
+                            waveFormatTag,
+                            channels,
+                            samplesPerSeconds,
+                            averageBytesPerSeconds,
+                            blockSize,
+                            bitsPerSample,
+                            extendedInfo);
+                }
+                default:
+                    throw new NotSupportedMediaException($"Unsupported WAVE format.: formatTag={waveFormatTag}");
             }
         }
 

@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media.Animation;
 using Palmtree;
+using Palmtree.Media;
 using Palmtree.Media.Wave;
 
 namespace WavePlayer.GUI
@@ -120,7 +118,7 @@ namespace WavePlayer.GUI
                     case WaveSampleDataType.LittleEndian64bitFloat:
                         return waveFile.GetSampleDataAsF64LE(channel, frame);
                     default:
-                        throw new NotSupportedException($"Sample data of type \"{sampleDataType}\" is not supported.");
+                        throw new NotSupportedMediaException($"Sample data of type \"{sampleDataType}\" is not supported.");
                 }
             }
         }
