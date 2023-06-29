@@ -11,6 +11,7 @@ It is a simple audio player that can play while displaying the waveform of a WAV
 + It corresponds to his WAVE file in the format below.
   + Unsigned 8bit PCM
   + Signed 16bit PCM (little endian)
+  + Signed 24bit PCM (little endian)
   + Signed 32bit PCM (little endian)
   + Signed 64bit PCM (little endian)[^1]
   + IEEE float 32bit PCM (little endian)
@@ -49,13 +50,13 @@ The following shortcut keys are supported.
 |Key | Action when key is pressed|
 |--|--|
 |Right cursor |Marker advances 100 milliseconds.|
-|`Ctrl`+Right Cursor| Marker advances 1 second.|
-|Up cursor |Marker advances 10 seconds.|
-|`Ctrl`+Up Cursor |Marker advances 60 seconds.|
+|Up cursor| Marker advances 1 second.|
+|`Ctrl`+Right cursor |Marker advances 10 seconds.|
+|`Ctrl`+Up cursor |Marker advances 60 seconds.|
 |Left cursor |Marker moves back 100 milliseconds.|
-|`Ctrl`+Left Cursor| Moves the marker back one second.|
-|Down cursor |Marker moves back 10 seconds.|
-|`Ctrl`+Down Cursor| Marker moves back 60 seconds.|
+|Down Cursor| Moves the marker back 1 second.|
+|`Ctrl`+Left cursor |Marker moves back 10 seconds.|
+|`Ctrl`+Down cursor| Marker moves back 60 seconds.|
 |`HOME` |Marker returns to its initial position.|
 
 #### 5.3.3 Clipboard related
