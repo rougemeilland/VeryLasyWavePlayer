@@ -1,9 +1,6 @@
 ﻿using System;
-using System.IO;
-using Palmtree.IO;
-using Palmtree.Media.Wave;
-using System.Media;
-using System.Windows.Media;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace Experiment
 {
@@ -11,11 +8,29 @@ namespace Experiment
     {
         private static int Main(string[] args)
         {
-            for (int i = 0; i < 23; ++i)
+            var fps = 29.97;
+            var totalFrames = fps * 60;
+            for (var frame = 0; frame < totalFrames; ++frame)
             {
-                var x1 = 0.001 * i;
-                var x2 = Math.Round(x1, 2, MidpointRounding.ToEven);
-                Console.WriteLine($"x1={x1:F4}, x2={x2:F4}");
+                using (var canvas = new Bitmap(640, 480))
+                using (var g = Graphics.FromImage(canvas))
+                using (var fnt = new Font("MS UI Gothic", 40))
+                {
+                    RectangleF rect = new RectangleF(10, 10, 620, 460);
+                    g.FillRectangle(Brushes.White, rect);
+                    g.DrawString(
+                        string.Join(
+                            "\n",
+                            new[]
+                            {
+                                $"Frame={frame,4}",
+                                $"Time={frame / fps,9:F6}[sec]",
+                            }),
+                        fnt,
+                        Brushes.Black,
+                        rect);
+                    canvas.Save($"frames_{frame:D4}.png", ImageFormat.Png);
+                }
             }
 
             return 0;

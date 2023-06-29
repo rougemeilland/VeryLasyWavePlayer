@@ -47,10 +47,10 @@
         <KeyBinding Key="Esc" Command="{Binding Path=PauseCommand}"/>
         <KeyBinding Key="Right" Command="{Binding Path=PositionForward100msecCommand}"/>
         <KeyBinding Key="Left" Command="{Binding Path=PositionBackward100msecCommand}"/>
-        <KeyBinding Key="Right" Modifiers="Ctrl" Command="{Binding Path=PositionForward1secCommand}"/>
-        <KeyBinding Key="Left" Modifiers="Ctrl" Command="{Binding Path=PositionBackward1secCommand}"/>
-        <KeyBinding Key="Up" Command="{Binding Path=PositionForward10secCommand}"/>
-        <KeyBinding Key="Down" Command="{Binding Path=PositionBackward10secCommand}"/>
+        <KeyBinding Key="Up" Command="{Binding Path=PositionForward1secCommand}"/>
+        <KeyBinding Key="Down" Command="{Binding Path=PositionBackward1secCommand}"/>
+        <KeyBinding Key="Right" Modifiers="Ctrl" Command="{Binding Path=PositionForward10secCommand}"/>
+        <KeyBinding Key="Left" Modifiers="Ctrl" Command="{Binding Path=PositionBackward10secCommand}"/>
         <KeyBinding Key="Up" Modifiers="Ctrl" Command="{Binding Path=PositionForward60secCommand}"/>
         <KeyBinding Key="Down" Modifiers="Ctrl" Command="{Binding Path=PositionBackward60secCommand}"/>
         <KeyBinding Key="Home" Command="{Binding Path=PositionHomeCommand}"/>
